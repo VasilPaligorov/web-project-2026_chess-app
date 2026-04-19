@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
+import GamePage from './pages/game/GamePage';
 
 export default function App() {
   return (
@@ -9,7 +10,7 @@ export default function App() {
         <Route path="/login" element={<div>Login</div>} />
         <Route path="/register" element={<div>Register</div>} />
         <Route path="/lobby" element={<div>Lobby</div>} />
-        <Route path="/game/:gameId" element={<div>Game</div>} />
+        <Route path="/game/:gameId" element={<GamePage />} />
         <Route path="/profile/:userId" element={<div>Profile</div>} />
         <Route path="/spectate/:token" element={<div>Spectate</div>} />
       </Routes>
