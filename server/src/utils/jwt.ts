@@ -8,9 +8,10 @@ const secret = () => {
 
 export interface JwtPayload {
   userId: string;
+  exp?: number;
 }
 
-export const signToken = (payload: JwtPayload): string =>
+export const signToken = (payload: { userId: string }): string =>
   jwt.sign(payload, secret(), { expiresIn: (process.env.JWT_EXPIRES_IN ?? '30m') as jwt.SignOptions['expiresIn'] });
 
 export const verifyToken = (token: string): JwtPayload =>
