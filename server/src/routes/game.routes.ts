@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Game } from '../models/Game';
 import { requireAuth } from '../middleware/auth';
+import { getIO } from '../socket/io';
 
 const router = Router();
 
@@ -103,6 +104,10 @@ router.post('/:id/join', requireAuth, async (req: Request, res: Response) => {
       });
       return;
     }
+
+    const whiteId = String(game.whitePlayer._id);
+    const blackId = String(game.blackPlayer!._id);
+    getIO().to([`user:${whiteId}`, `user:${blackId}`]).emit('game:start', game);
 
     res.json({ success: true, data: game });
   } catch (err) {
