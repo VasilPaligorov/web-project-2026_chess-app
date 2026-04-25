@@ -12,7 +12,7 @@ const toPublicUser = (user: InstanceType<typeof User>) => ({
   username:  user.username,
   email:     user.email,
   elo:       user.elo,
-  createdAt: user.createdAt,
+  createdAt: user.createdAt.toISOString(),
 });
 
 // POST /api/auth/register
