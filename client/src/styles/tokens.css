@@ -1,0 +1,52 @@
+:root {
+  /* color */
+  --ink: #0f0d08;
+  --ink-soft: #2a2620;
+  --paper: #f4ede0;
+  --paper-deep: #ebe2d0;
+  --paper-edge: #ddd2bb;
+  --oxblood: #7a1418;
+  --oxblood-deep: #5e0e12;
+  --ash: #6b6760;
+  --ash-soft: #9a948a;
+  --rule: rgba(15, 13, 8, 0.16);
+  --rule-soft: rgba(15, 13, 8, 0.08);
+  --shadow-sm: 0 1px 0 rgba(15, 13, 8, 0.06);
+  --shadow-md: 0 12px 32px -16px rgba(15, 13, 8, 0.18);
+  --shadow-lg: 0 24px 56px -28px rgba(15, 13, 8, 0.28);
+
+  /* type families */
+  --font-display: 'DM Serif Display', 'Times New Roman', Georgia, serif;
+  --font-body:    'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* type scale */
+  --t-display-xl: clamp(3rem, 8vw, 5.5rem);
+  --t-display-lg: clamp(2.25rem, 5vw, 3.5rem);
+  --t-display-md: clamp(1.5rem, 3vw, 2.25rem);
+  --t-body-lg: 1.125rem;
+  --t-body: 1rem;
+  --t-body-sm: 0.9375rem;
+  --t-eyebrow: 0.75rem;
+  --t-mono: 0.875rem;
+
+  /* spacing — 4pt grid */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+  --s-20: 80px;
+  --s-24: 96px;
+
+  /* motion */
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --t-fast: 140ms;
+  --t-med: 280ms;
+  --t-slow: 520ms;
+}

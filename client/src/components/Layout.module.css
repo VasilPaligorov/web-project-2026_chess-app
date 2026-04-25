@@ -1,0 +1,124 @@
+.shell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: var(--s-6);
+  padding: var(--s-6) clamp(var(--s-6), 5vw, var(--s-16));
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  left: clamp(var(--s-6), 5vw, var(--s-16));
+  right: clamp(var(--s-6), 5vw, var(--s-16));
+  bottom: -3px;
+  height: 1px;
+  background: var(--rule-soft);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.brandMark {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--oxblood);
+  line-height: 1;
+  transform: translateY(2px);
+}
+
+.brandWord {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  letter-spacing: 0.01em;
+}
+
+.brandTagline {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin-left: var(--s-3);
+  padding-left: var(--s-3);
+  border-left: 1px solid var(--rule);
+}
+
+.nav {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-8);
+}
+
+.user {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.userLabel {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.userName {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--ink);
+}
+
+.userElo {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  color: var(--ash);
+  letter-spacing: 0.02em;
+}
+
+.logout {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--ink);
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+
+.logout:hover {
+  color: var(--oxblood);
+  border-bottom-color: var(--oxblood);
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 640px) {
+  .header {
+    grid-template-columns: 1fr;
+    gap: var(--s-4);
+  }
+  .brandTagline {
+    display: none;
+  }
+}
