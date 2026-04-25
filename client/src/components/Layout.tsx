@@ -1,6 +1,7 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
+import { disconnectSocket } from '../services/socket';
 import styles from './Layout.module.css';
 
 export default function Layout() {
@@ -14,6 +15,7 @@ export default function Layout() {
     } catch {
       /* token may already be invalid; clear local state regardless */
     }
+    disconnectSocket();
     logout();
     navigate('/login');
   };

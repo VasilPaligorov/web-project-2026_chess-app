@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import api from '../../services/api';
+import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import { useWaitingGames } from '../../hooks/useWaitingGames';
 import type { Game } from '../../../../shared/types';
@@ -41,6 +42,17 @@ export default function Lobby() {
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const myWaitingGame = games?.find((g) => g.whitePlayer._id === user?._id) ?? null;
+
+  useEffect(() => {
+    const socket = getSocket();
+    const onGameStart = (game: Game) => {
+      navigate(`/game/${game._id}`);
+    };
+    socket.on('game:start', onGameStart);
+    return () => {
+      socket.off('game:start', onGameStart);
+    };
+  }, [navigate]);
 
   const handleCreate = async () => {
     setActionError(null);

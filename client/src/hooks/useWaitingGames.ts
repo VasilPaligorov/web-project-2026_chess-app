@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import api from '../services/api';
+import { getSocket } from '../services/socket';
 import type { Game } from '../../../shared/types';
 
 interface ListResponse {
@@ -9,7 +10,7 @@ interface ListResponse {
   data?: Game[];
 }
 
-export function useWaitingGames(pollMs = 3000) {
+export function useWaitingGames(pollMs = 30_000) {
   const [games, setGames] = useState<Game[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +33,14 @@ export function useWaitingGames(pollMs = 3000) {
   useEffect(() => {
     refresh();
     const id = setInterval(refresh, pollMs);
-    return () => clearInterval(id);
+
+    const socket = getSocket();
+    socket.on('lobby:changed', refresh);
+
+    return () => {
+      clearInterval(id);
+      socket.off('lobby:changed', refresh);
+    };
   }, [refresh, pollMs]);
 
   return { games, error, refresh };

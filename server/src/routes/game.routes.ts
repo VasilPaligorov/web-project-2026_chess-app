@@ -26,6 +26,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
 
     const game = await Game.create({ whitePlayer: userId });
     const populated = await game.populate('whitePlayer', PUBLIC_USER_FIELDS);
+    getIO().emit('lobby:changed');
     res.status(201).json({ success: true, data: populated });
   } catch (err) {
     console.error('Create game error:', err);
@@ -107,7 +108,9 @@ router.post('/:id/join', requireAuth, async (req: Request, res: Response) => {
 
     const whiteId = String(game.whitePlayer._id);
     const blackId = String(game.blackPlayer!._id);
-    getIO().to([`user:${whiteId}`, `user:${blackId}`]).emit('game:start', game);
+    const io = getIO();
+    io.to([`user:${whiteId}`, `user:${blackId}`]).emit('game:start', game);
+    io.emit('lobby:changed');
 
     res.json({ success: true, data: game });
   } catch (err) {
@@ -140,6 +143,7 @@ router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
       return;
     }
 
+    getIO().emit('lobby:changed');
     res.json({ success: true, message: 'Game cancelled' });
   } catch (err) {
     console.error('Cancel game error:', err);
