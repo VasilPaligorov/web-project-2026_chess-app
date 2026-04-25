@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db';
 import authRoutes from './routes/auth.routes';
+import gameRoutes from './routes/game.routes';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -15,6 +16,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/games', gameRoutes);
 
 connectDB()
   .then(() => {
