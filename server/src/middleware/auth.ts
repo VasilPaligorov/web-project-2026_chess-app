@@ -11,21 +11,25 @@ declare global {
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
+  const token = req.headers.authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
+  if (!token) {
     res.status(401).json({ success: false, message: 'No token provided' });
     return;
   }
 
-  const token = header.slice(7);
+  let payload: JwtPayload;
   try {
-    if (await isBlacklisted(token)) {
-      res.status(401).json({ success: false, message: 'Token has been invalidated' });
-      return;
-    }
-    req.user = verifyToken(token);
-    next();
+    payload = verifyToken(token);
   } catch {
     res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    return;
   }
+
+  if (await isBlacklisted(token)) {
+    res.status(401).json({ success: false, message: 'Token has been invalidated' });
+    return;
+  }
+
+  req.user = payload;
+  next();
 }

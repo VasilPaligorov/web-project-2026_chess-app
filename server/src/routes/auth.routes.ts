@@ -1,14 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { User } from '../models/User';
 import { hashPassword, comparePassword } from '../utils/password';
-import { signToken, verifyToken } from '../utils/jwt';
+import { signToken } from '../utils/jwt';
 import { requireAuth } from '../middleware/auth';
 import { blacklistToken } from '../utils/tokenBlacklist';
 
 const router = Router();
 
 const toPublicUser = (user: InstanceType<typeof User>) => ({
-  _id:       user._id,
+  _id:       user._id.toString(),
   username:  user.username,
   email:     user.email,
   elo:       user.elo,
@@ -63,7 +63,7 @@ router.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+passwordHash');
     if (!user || !(await comparePassword(password, user.passwordHash))) {
       res.status(401).json({ success: false, message: 'Invalid credentials' });
       return;
@@ -80,9 +80,8 @@ router.post('/login', async (req: Request, res: Response) => {
 // POST /api/auth/logout
 router.post('/logout', requireAuth, async (req: Request, res: Response) => {
   try {
-    const token = req.headers.authorization!.slice(7);
-    const { exp } = verifyToken(token);
-    const expiresAt = exp ? new Date(exp * 1000) : new Date(Date.now() + 30 * 60 * 1000);
+    const token = req.headers.authorization!.match(/^Bearer\s+(\S+)$/i)![1];
+    const expiresAt = new Date(req.user!.exp * 1000);
     await blacklistToken(token, expiresAt);
     res.json({ success: true, message: 'Logged out' });
   } catch (err) {

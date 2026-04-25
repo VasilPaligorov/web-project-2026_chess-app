@@ -12,7 +12,7 @@ const userSchema = new Schema<IUser>(
   {
     username: { type: String, required: true, unique: true, trim: true },
     email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: true, select: false },
     elo: { type: Number, default: 1200 },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
