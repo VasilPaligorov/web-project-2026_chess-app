@@ -1,9 +1,8 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { connectDB } from './config/db';
-
-dotenv.config();
+import authRoutes from './routes/auth.routes';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -14,6 +13,8 @@ app.use(express.json());
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
+
+app.use('/api/auth', authRoutes);
 
 connectDB().then(() => {
   app.listen(PORT, () => {
