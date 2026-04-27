@@ -30,15 +30,16 @@ router.post('/register', async (req: Request, res: Response) => {
       return;
     }
 
-    const existing = await User.findOne({ $or: [{ email }, { username }] });
+    const normalizedEmail = email.toLowerCase();
+    const existing = await User.findOne({ $or: [{ email: normalizedEmail }, { username }] });
     if (existing) {
-      const field = existing.email === email ? 'email' : 'username';
+      const field = existing.email === normalizedEmail ? 'email' : 'username';
       res.status(409).json({ success: false, message: `That ${field} is already taken` });
       return;
     }
 
     const passwordHash = await hashPassword(password);
-    const user = await User.create({ username, email, passwordHash });
+    const user = await User.create({ username, email: normalizedEmail, passwordHash });
     const token = signToken({ userId: String(user._id) });
 
     res.status(201).json({ success: true, data: { user: toPublicUser(user), token } });
@@ -56,14 +57,20 @@ router.post('/register', async (req: Request, res: Response) => {
 // POST /api/auth/login
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    if (!email || !password) {
-      res.status(400).json({ success: false, message: 'email and password are required' });
+    if (!identifier || !password) {
+      res.status(400).json({ success: false, message: 'identifier and password are required' });
       return;
     }
 
-    const user = await User.findOne({ email }).select('+passwordHash');
+    const user = await User.findOne({
+      $or: [
+        { email: identifier.toLowerCase() },
+        { username: identifier },
+      ],
+    }).select('+passwordHash');
+
     if (!user || !(await comparePassword(password, user.passwordHash))) {
       res.status(401).json({ success: false, message: 'Invalid credentials' });
       return;

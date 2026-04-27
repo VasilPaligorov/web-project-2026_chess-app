@@ -1,0 +1,106 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #262421;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #e8e6e3;
+}
+
+.hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  background-image:
+    linear-gradient(135deg, rgba(38, 36, 33, 0.94), rgba(38, 36, 33, 0.94)),
+    repeating-conic-gradient(#3d3a36 0deg 90deg, #4a4641 90deg 180deg);
+  background-size: cover, 96px 96px;
+}
+
+.heroInner {
+  text-align: center;
+  max-width: 640px;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  letter-spacing: -0.01em;
+}
+
+.titleAccent {
+  color: #81b64c;
+}
+
+.tagline {
+  font-size: 1.15rem;
+  color: #a8a29e;
+  margin: 0 0 2rem;
+  line-height: 1.55;
+}
+
+.ctaRow {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.primary {
+  background: #81b64c;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.85rem 1.75rem;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.primary:hover {
+  background: #92c54e;
+}
+
+.secondary {
+  background: transparent;
+  color: #e8e6e3;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.85rem 1.75rem;
+  border: 1px solid #3d3a36;
+  border-radius: 4px;
+  transition: border-color 0.15s;
+}
+
+.secondary:hover {
+  border-color: #81b64c;
+}
+
+.health {
+  margin-top: 2.5rem;
+  font-size: 0.85rem;
+  color: #6f6b66;
+}
+
+.healthButton {
+  background: transparent;
+  color: #6f6b66;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.healthButton:hover {
+  color: #a8a29e;
+}
+
+.healthResult {
+  margin-top: 0.5rem;
+  color: #a8a29e;
+}
