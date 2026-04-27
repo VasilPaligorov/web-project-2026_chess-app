@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import api from '../../services/api';
@@ -12,6 +12,11 @@ interface GameResponse {
   success: boolean;
   message?: string;
   data?: Game;
+}
+
+interface CurrentGameResponse {
+  success: boolean;
+  data: Game | null;
 }
 
 function relativeTime(iso: string): string {
@@ -40,19 +45,37 @@ export default function Lobby() {
   const [creating, setCreating] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [currentGame, setCurrentGame] = useState<Game | null>(null);
 
   const myWaitingGame = games?.find((g) => g.whitePlayer._id === user?._id) ?? null;
+  const myActiveGame = currentGame?.status === 'active' ? currentGame : null;
+
+  const fetchCurrentGame = useCallback(async () => {
+    try {
+      const { data } = await api.get<CurrentGameResponse>('/api/games/me/current');
+      if (data.success) {
+        setCurrentGame(data.data);
+      }
+    } catch {
+      /* best-effort; banner stays hidden on failure */
+    }
+  }, []);
 
   useEffect(() => {
+    fetchCurrentGame();
     const socket = getSocket();
     const onGameStart = (game: Game) => {
       navigate(`/game/${game._id}`);
     };
     socket.on('game:start', onGameStart);
+    socket.on('game:start', fetchCurrentGame);
+    socket.on('lobby:changed', fetchCurrentGame);
     return () => {
       socket.off('game:start', onGameStart);
+      socket.off('game:start', fetchCurrentGame);
+      socket.off('lobby:changed', fetchCurrentGame);
     };
-  }, [navigate]);
+  }, [navigate, fetchCurrentGame]);
 
   const handleCreate = async () => {
     setActionError(null);
@@ -103,6 +126,26 @@ export default function Lobby() {
 
   return (
     <div className={styles.page}>
+      {myActiveGame && (
+        <div className={styles.resumeBanner} role="status">
+          <div className={styles.resumeMeta}>
+            <p className={styles.resumeEyebrow}>A match in progress</p>
+            <p className={styles.resumeTitle}>
+              {myActiveGame.whitePlayer.username}
+              <span className={styles.resumeVs}>vs</span>
+              {myActiveGame.blackPlayer?.username ?? '—'}
+            </p>
+          </div>
+          <button
+            type="button"
+            className={styles.resumeBtn}
+            onClick={() => navigate(`/game/${myActiveGame._id}`)}
+          >
+            Resume →
+          </button>
+        </div>
+      )}
+
       <header className={styles.hero}>
         <div className={styles.heroLeft}>
           <p className={styles.eyebrow}>Folio Nº III · The Lobby</p>
@@ -146,9 +189,13 @@ export default function Lobby() {
               type="button"
               className={styles.createBtn}
               onClick={handleCreate}
-              disabled={creating}
+              disabled={creating || !!myActiveGame}
             >
-              {creating ? 'Setting board…' : 'Begin a new game'}
+              {myActiveGame
+                ? 'Currently in a match'
+                : creating
+                  ? 'Setting board…'
+                  : 'Begin a new game'}
             </button>
           )}
         </div>

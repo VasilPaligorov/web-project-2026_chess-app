@@ -47,6 +47,23 @@ router.get('/waiting', requireAuth, async (_req: Request, res: Response) => {
   }
 });
 
+// GET /api/games/me/current — the user's active or waiting game (for resume)
+router.get('/me/current', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const game = await Game.findOne({
+      status: { $in: ['waiting', 'active'] },
+      $or: [{ whitePlayer: userId }, { blackPlayer: userId }],
+    })
+      .populate('whitePlayer', PUBLIC_USER_FIELDS)
+      .populate('blackPlayer', PUBLIC_USER_FIELDS);
+    res.json({ success: true, data: game });
+  } catch (err) {
+    console.error('Get current game error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // GET /api/games/:id — fetch single game (for rejoin / refresh)
 router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
