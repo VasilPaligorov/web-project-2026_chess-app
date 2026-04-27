@@ -3,6 +3,7 @@ import { useAuthStore } from './store/authStore';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
 import Lobby from './pages/lobby/Lobby';
+import GamePage from './pages/game/GamePage';
 
 function HomeRedirect() {
   const token = useAuthStore((s) => s.token);
@@ -34,7 +35,7 @@ export default function App() {
           }
         >
           <Route path="/lobby" element={<Lobby />} />
-          <Route path="/game/:gameId" element={<PlaceholderPage title="Game" />} />
+          <Route path="/game/:gameId" element={<GamePage />} />
           <Route path="/profile/:userId" element={<PlaceholderPage title="Profile" />} />
         </Route>
 
