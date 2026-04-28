@@ -1,45 +1,33 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './store/authStore';
-import Layout from './components/Layout';
-import PrivateRoute from './components/PrivateRoute';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
 import Lobby from './pages/lobby/Lobby';
 import GamePage from './pages/game/GamePage';
-
-function HomeRedirect() {
-  const token = useAuthStore((s) => s.token);
-  return <Navigate to={token ? '/lobby' : '/login'} replace />;
-}
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div style={{ padding: '6rem 5vw' }}>
-      <p className="eyebrow">In progress</p>
-      <h2 style={{ marginTop: '0.5rem' }}>{title}</h2>
-    </div>
-  );
-}
+import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<HomeRedirect />} />
-        <Route path="/login" element={<PlaceholderPage title="Login" />} />
-        <Route path="/register" element={<PlaceholderPage title="Register" />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         <Route
           element={
-            <PrivateRoute>
+            <ProtectedRoute>
               <Layout />
-            </PrivateRoute>
+            </ProtectedRoute>
           }
         >
           <Route path="/lobby" element={<Lobby />} />
           <Route path="/game/:gameId" element={<GamePage />} />
-          <Route path="/profile/:userId" element={<PlaceholderPage title="Profile" />} />
+          <Route path="/profile/:userId" element={<div>Profile (P4)</div>} />
         </Route>
 
-        <Route path="/spectate/:token" element={<PlaceholderPage title="Spectate" />} />
+        <Route path="/spectate/:token" element={<div>Spectate (P5)</div>} />
       </Routes>
     </BrowserRouter>
   );

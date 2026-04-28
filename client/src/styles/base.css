@@ -55,8 +55,8 @@ body {
   line-height: 1.55;
   letter-spacing: 0.005em;
   background:
-    radial-gradient(ellipse at top left, rgba(122, 20, 24, 0.04), transparent 55%),
-    radial-gradient(ellipse at bottom right, rgba(15, 13, 8, 0.06), transparent 60%),
+    radial-gradient(ellipse at 8% 12%, rgba(122, 20, 24, 0.05), transparent 50%),
+    radial-gradient(ellipse at 92% 88%, rgba(15, 13, 8, 0.05), transparent 55%),
     var(--paper);
 }
 

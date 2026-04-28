@@ -5,7 +5,12 @@ const hashToken = (token: string) =>
   createHash('sha256').update(token).digest('hex');
 
 export async function blacklistToken(token: string, expiresAt: Date) {
-  await BlacklistedToken.create({ tokenHash: hashToken(token), expiresAt });
+  const tokenHash = hashToken(token);
+  await BlacklistedToken.updateOne(
+    { tokenHash },
+    { $setOnInsert: { tokenHash, expiresAt } },
+    { upsert: true },
+  );
 }
 
 export async function isBlacklisted(token: string): Promise<boolean> {

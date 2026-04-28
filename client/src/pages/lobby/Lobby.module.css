@@ -319,7 +319,7 @@
   font-size: var(--t-body-sm);
   font-style: italic;
   color: var(--oxblood);
-  background: rgba(122, 20, 24, 0.05);
+  background: var(--oxblood-tint);
 }
 
 .errorTag {
@@ -419,7 +419,7 @@
 }
 
 .row:hover {
-  background: rgba(15, 13, 8, 0.025);
+  background: rgba(15, 13, 8, 0.03);
 }
 
 .row:nth-child(1) { animation-delay: 40ms; }
@@ -430,11 +430,11 @@
 .row:nth-child(n+6) { animation-delay: 340ms; }
 
 .rowMine {
-  background: rgba(122, 20, 24, 0.04);
+  background: rgba(122, 20, 24, 0.05);
 }
 
 .rowMine:hover {
-  background: rgba(122, 20, 24, 0.07);
+  background: rgba(122, 20, 24, 0.08);
 }
 
 .rowMine::before {

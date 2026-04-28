@@ -2,11 +2,12 @@
   /* color */
   --ink: #0f0d08;
   --ink-soft: #2a2620;
-  --paper: #f4ede0;
+  --paper: #f6efe2;
   --paper-deep: #ebe2d0;
   --paper-edge: #ddd2bb;
   --oxblood: #7a1418;
   --oxblood-deep: #5e0e12;
+  --oxblood-tint: rgba(122, 20, 24, 0.05);
   --ash: #6b6760;
   --ash-soft: #9a948a;
   --rule: rgba(15, 13, 8, 0.16);
@@ -14,6 +15,11 @@
   --shadow-sm: 0 1px 0 rgba(15, 13, 8, 0.06);
   --shadow-md: 0 12px 32px -16px rgba(15, 13, 8, 0.18);
   --shadow-lg: 0 24px 56px -28px rgba(15, 13, 8, 0.28);
+
+  /* canvas aliases — kept for semantic CSS that references them */
+  --canvas:        var(--paper);
+  --canvas-raised: var(--paper-deep);
+  --canvas-deep:   var(--ink);
 
   /* type families */
   --font-display: 'DM Serif Display', 'Times New Roman', Georgia, serif;
