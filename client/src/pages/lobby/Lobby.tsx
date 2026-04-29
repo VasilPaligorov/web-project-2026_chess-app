@@ -99,11 +99,11 @@ export default function Lobby() {
     setJoiningId(id);
     try {
       const { data } = await api.post<GameResponse>(`/api/games/${id}/join`);
-      if (data.success && data.data) {
-        navigate(`/game/${data.data._id}`);
-      } else {
+      if (!data.success) {
         setActionError(data.message ?? 'Could not join game');
       }
+      // On success the server emits `game:start` to both players;
+      // the listener above navigates this client to /game/:id.
     } catch (err) {
       setActionError(pickError(err, 'Could not join game'));
     } finally {
