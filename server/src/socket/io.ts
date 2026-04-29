@@ -1,10 +1,11 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from '../utils/jwt';
+import { registerSpectatorHandlers } from './spectatorSocket';
 
 declare module 'socket.io' {
   interface SocketData {
-    userId: string;
+    userId: string | undefined;
   }
 }
 
@@ -17,8 +18,8 @@ export const initIO = (httpServer: HttpServer): Server => {
 
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
-    if (typeof token !== 'string' || !token) {
-      next(new Error('Auth token missing'));
+    if (!token) {
+      next();
       return;
     }
     try {
@@ -31,7 +32,10 @@ export const initIO = (httpServer: HttpServer): Server => {
   });
 
   io.on('connection', (socket: Socket) => {
-    socket.join(`user:${socket.data.userId}`);
+    if (socket.data.userId) {
+      socket.join(`user:${socket.data.userId}`);
+    }
+    registerSpectatorHandlers(socket);
   });
 
   return io;

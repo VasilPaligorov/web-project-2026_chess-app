@@ -31,3 +31,37 @@ export interface Game {
   createdAt: string;
   finishedAt: string | null;
 }
+
+export interface Move {
+  from: string;
+  to: string;
+  promotion?: 'q' | 'r' | 'b' | 'n';
+}
+
+export interface MovePayload {
+  gameId: string;
+  move: Move;
+}
+
+export interface MoveUpdatePayload {
+  fen: string;
+  pgn: string;
+  turn: 'w' | 'b';
+  lastMove: Move;
+}
+
+export interface GameOverPayload {
+  winner: 'white' | 'black' | 'draw';
+  reason: 'checkmate' | 'resignation' | 'stalemate' | 'timeout';
+}
+
+export const SocketEvents = {
+  GAME_JOIN:      'game:join',
+  GAME_START:     'game:start',
+  GAME_OVER:      'game:over',
+  MOVE_MAKE:      'move:make',
+  MOVE_UPDATE:    'move:update',
+  SPECTATOR_JOIN: 'spectator:join',
+} as const;
+
+export type SocketEvent = typeof SocketEvents[keyof typeof SocketEvents];
