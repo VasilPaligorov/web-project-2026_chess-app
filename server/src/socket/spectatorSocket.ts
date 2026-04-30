@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 import { Game } from '../models/Game';
-import { SocketEvents } from '../../shared/types';
+import { SocketEvents } from '../../../shared/types';
 
 export function registerSpectatorHandlers(socket: Socket): void {
   socket.on(SocketEvents.SPECTATOR_JOIN, async (token: unknown) => {
