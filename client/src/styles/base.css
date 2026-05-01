@@ -1,0 +1,135 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+h1, h2, h3, h4, h5, h6,
+p, ul, ol, figure, blockquote {
+  margin: 0;
+  padding: 0;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+html {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  font-feature-settings: "kern", "liga", "onum";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  position: relative;
+  font-size: var(--t-body);
+  line-height: 1.55;
+  letter-spacing: 0.005em;
+  background:
+    radial-gradient(ellipse at 8% 12%, rgba(122, 20, 24, 0.05), transparent 50%),
+    radial-gradient(ellipse at 92% 88%, rgba(15, 13, 8, 0.05), transparent 55%),
+    var(--paper);
+}
+
+/* Paper grain — subtle SVG noise overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  line-height: 1.04;
+  letter-spacing: -0.018em;
+  color: var(--ink);
+}
+
+h1 { font-size: var(--t-display-xl); }
+h2 { font-size: var(--t-display-lg); }
+h3 { font-size: var(--t-display-md); }
+h4 { font-size: 1.5rem; }
+
+p {
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  font-weight: 400;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: color var(--t-fast) var(--ease);
+}
+
+a:hover {
+  color: var(--oxblood);
+}
+
+::selection {
+  background: var(--oxblood);
+  color: var(--paper);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* utilities */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+/* focus ring — minimal but visible */
+:where(button, a, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--oxblood);
+  outline-offset: 2px;
+}

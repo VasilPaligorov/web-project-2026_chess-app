@@ -13,4 +13,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const url: string = err.config?.url ?? '';
+    const isAuthAttempt = url.includes('/api/auth/login') || url.includes('/api/auth/register');
+    if (err.response?.status === 401 && !isAuthAttempt) {
+      useAuthStore.getState().logout();
+    }
+    return Promise.reject(err);
+  }
+);
+
 export default api;
