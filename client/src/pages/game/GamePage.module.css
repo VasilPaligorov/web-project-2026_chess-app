@@ -1,4 +1,174 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--s-3) clamp(var(--s-6), 5vw, var(--s-16));
+}
+
 .board-wrapper {
   max-width: 500px;
+  width: 100%;
   margin: 3rem auto;
+  padding: 0 var(--s-6);
+}
+
+/* ── kebab menu ── */
+
+.menu {
+  position: relative;
+}
+
+.menu-trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: var(--s-2) var(--s-3);
+  cursor: pointer;
+}
+
+.dot {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ash);
+  transition: background var(--t-fast) var(--ease);
+}
+
+.menu-trigger:hover .dot {
+  background: var(--ink);
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + var(--s-1));
+  right: 0;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow-md);
+  min-width: 180px;
+  z-index: 20;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: var(--s-3) var(--s-4);
+  text-align: left;
+  background: transparent;
+  border: none;
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease);
+}
+
+.menu-item:hover:not(:disabled) {
+  background: var(--paper-deep);
+}
+
+.menu-item:disabled {
+  color: var(--ash-soft);
+  cursor: default;
+}
+
+/* ── share modal ── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 13, 8, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow-lg);
+  width: min(480px, calc(100vw - var(--s-8)));
+  padding: var(--s-6);
+}
+
+.modal-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--s-3);
+}
+
+.modal-eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin: 0;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--ash);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color var(--t-fast) var(--ease);
+}
+
+.modal-close:hover {
+  color: var(--ink);
+}
+
+.modal-hint {
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  color: var(--ash);
+  margin: 0 0 var(--s-4);
+}
+
+.modal-row {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.modal-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  color: var(--ink);
+  background: var(--paper-deep);
+  border: 1px solid var(--rule);
+  padding: var(--s-2) var(--s-3);
+  min-width: 0;
+}
+
+.modal-copy {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink);
+  border: none;
+  padding: var(--s-2) var(--s-4);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--t-fast) var(--ease);
+}
+
+.modal-copy:hover {
+  background: var(--ink-soft);
 }

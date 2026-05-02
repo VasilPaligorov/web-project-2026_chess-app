@@ -64,6 +64,25 @@ router.get('/me/current', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/games/spectate/:token — fetch game by spectator token (no auth)
+router.get('/spectate/:token', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.params;
+    const game = await Game.findOne({ spectatorToken: token })
+      .populate('whitePlayer', PUBLIC_USER_FIELDS)
+      .populate('blackPlayer', PUBLIC_USER_FIELDS)
+      .populate('winner', PUBLIC_USER_FIELDS);
+    if (!game) {
+      res.status(404).json({ success: false, message: 'Game not found' });
+      return;
+    }
+    res.json({ success: true, data: game });
+  } catch (err) {
+    console.error('Spectate game fetch error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // GET /api/games/:id — fetch single game (for rejoin / refresh)
 router.get('/:id', requireAuth, async (req: Request, res: Response) => {
   try {
