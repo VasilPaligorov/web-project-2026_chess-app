@@ -52,7 +52,7 @@ export interface MoveUpdatePayload {
 
 export interface GameOverPayload {
   winner: 'white' | 'black' | 'draw';
-  reason: 'checkmate' | 'resignation' | 'stalemate' | 'timeout';
+  reason: 'checkmate' | 'resignation' | 'stalemate' | 'abandonment';
 }
 
 export const SocketEvents = {

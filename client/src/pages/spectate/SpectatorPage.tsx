@@ -17,24 +17,30 @@ export default function SpectatorPage() {
   useEffect(() => {
     if (!token) return;
 
+    // Subscribe to live updates BEFORE fetching, so a move:update arriving
+    // mid-flight isn't overwritten by the late initial-state response.
+    let receivedLiveUpdate = false;
+
+    const socket = getSocket();
+    const onMoveUpdate = (payload: MoveUpdatePayload) => {
+      receivedLiveUpdate = true;
+      setFen(payload.fen);
+    };
+    const onGameOver = (payload: GameOverPayload) => setResult(payload);
+
+    socket.on(SocketEvents.MOVE_UPDATE, onMoveUpdate);
+    socket.on(SocketEvents.GAME_OVER, onGameOver);
+    socket.emit(SocketEvents.SPECTATOR_JOIN, token);
+
     api
       .get<{ success: boolean; data: Game }>(`/api/games/spectate/${token}`)
       .then(({ data }) => {
         if (data.success) {
           setGame(data.data);
-          setFen(data.data.fen);
+          if (!receivedLiveUpdate) setFen(data.data.fen);
         }
       })
       .catch(() => setError('Game not found'));
-
-    const socket = getSocket();
-    socket.emit(SocketEvents.SPECTATOR_JOIN, token);
-
-    const onMoveUpdate = (payload: MoveUpdatePayload) => setFen(payload.fen);
-    const onGameOver = (payload: GameOverPayload) => setResult(payload);
-
-    socket.on(SocketEvents.MOVE_UPDATE, onMoveUpdate);
-    socket.on(SocketEvents.GAME_OVER, onGameOver);
 
     return () => {
       socket.off(SocketEvents.MOVE_UPDATE, onMoveUpdate);
