@@ -2,6 +2,7 @@ import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from '../utils/jwt';
 import { registerSpectatorHandlers } from './spectatorSocket';
+import { registerGameHandlers } from './gameSocket';
 
 declare module 'socket.io' {
   interface SocketData {
@@ -34,6 +35,7 @@ export const initIO = (httpServer: HttpServer): Server => {
   io.on('connection', (socket: Socket) => {
     if (socket.data.userId) {
       socket.join(`user:${socket.data.userId}`);
+      registerGameHandlers(socket);
     }
     registerSpectatorHandlers(socket);
   });
