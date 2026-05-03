@@ -12,6 +12,10 @@ const toPublicUser = (user: InstanceType<typeof User>) => ({
   username:  user.username,
   email:     user.email,
   elo:       user.elo,
+  peakElo:   user.peakElo,
+  wins:      user.wins,
+  losses:    user.losses,
+  draws:     user.draws,
   createdAt: user.createdAt.toISOString(),
 });
 
@@ -93,6 +97,21 @@ router.post('/logout', requireAuth, async (req: Request, res: Response) => {
     res.json({ success: true, message: 'Logged out' });
   } catch (err) {
     console.error('Logout error:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// GET /api/auth/me — current user (used by client to refresh after elo changes etc.)
+router.get('/me', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.user!.userId);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+    res.json({ success: true, data: { user: toPublicUser(user) } });
+  } catch (err) {
+    console.error('Get current user error:', err);
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
