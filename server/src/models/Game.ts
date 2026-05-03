@@ -3,6 +3,16 @@ import { randomUUID } from 'crypto';
 
 const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+export type EndReason =
+  | 'checkmate'
+  | 'resignation'
+  | 'stalemate'
+  | 'insufficient_material'
+  | 'threefold_repetition'
+  | 'fifty_move_rule'
+  | 'agreement'
+  | 'abandonment';
+
 export interface IGame extends Document {
   whitePlayer: Types.ObjectId;
   blackPlayer: Types.ObjectId | null;
@@ -17,6 +27,7 @@ export interface IGame extends Document {
   lastMoveAt: Date;
   createdAt: Date;
   finishedAt: Date | null;
+  endReason: EndReason | null;
 }
 
 const gameSchema = new Schema<IGame>(
@@ -36,6 +47,16 @@ const gameSchema = new Schema<IGame>(
     },
     lastMoveAt:  { type: Date, default: () => new Date() },
     finishedAt:  { type: Date, default: null },
+    endReason:   {
+      type: String,
+      enum: [
+        'checkmate', 'resignation', 'stalemate',
+        'insufficient_material', 'threefold_repetition',
+        'fifty_move_rule', 'agreement', 'abandonment',
+        null,
+      ],
+      default: null,
+    },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

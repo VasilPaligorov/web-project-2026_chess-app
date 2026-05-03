@@ -30,6 +30,7 @@ export interface Game {
   lastMoveAt: string;
   createdAt: string;
   finishedAt: string | null;
+  endReason: GameOverPayload['reason'] | null;
 }
 
 export interface Move {
@@ -52,15 +53,51 @@ export interface MoveUpdatePayload {
 
 export interface GameOverPayload {
   winner: 'white' | 'black' | 'draw';
-  reason: 'checkmate' | 'resignation' | 'stalemate' | 'abandonment';
+  reason:
+  | 'checkmate'
+  | 'resignation'
+  | 'stalemate'
+  | 'insufficient_material'
+  | 'threefold_repetition'
+  | 'fifty_move_rule'
+  | 'agreement'
+  | 'abandonment';
+}
+
+export interface MoveErrorPayload {
+  message: string;
+}
+
+export interface DrawOfferPayload {
+  from: 'white' | 'black';
+}
+
+export interface DisconnectPayload {
+  color: 'white' | 'black';
+  since: string;
+}
+
+export interface ReconnectPayload {
+  color: 'white' | 'black';
 }
 
 export const SocketEvents = {
-  GAME_JOIN:      'game:join',
-  GAME_START:     'game:start',
-  GAME_OVER:      'game:over',
-  MOVE_MAKE:      'move:make',
-  MOVE_UPDATE:    'move:update',
+  GAME_JOIN: 'game:join',
+  GAME_LEAVE: 'game:leave',
+  GAME_START: 'game:start',
+  GAME_OVER: 'game:over',
+  GAME_RESIGN: 'game:resign',
+  GAME_DISCONNECT: 'game:disconnect',
+  GAME_RECONNECT: 'game:reconnect',
+  GAME_CLAIM_WIN: 'game:claim-win',
+  GAME_CLAIM_ERROR: 'game:claim-error',
+  MOVE_MAKE: 'move:make',
+  MOVE_UPDATE: 'move:update',
+  MOVE_ERROR: 'move:error',
+  DRAW_OFFER: 'draw:offer',
+  DRAW_ACCEPT: 'draw:accept',
+  DRAW_DECLINE: 'draw:decline',
+  DRAW_DECLINED: 'draw:declined',
   SPECTATOR_JOIN: 'spectator:join',
 } as const;
 
