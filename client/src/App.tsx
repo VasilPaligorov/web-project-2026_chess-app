@@ -4,6 +4,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Lobby from './pages/lobby/Lobby';
 import GamePage from './pages/game/GamePage';
+import Profile from './pages/profile/Profile';
 import SpectatorPage from './pages/spectate/SpectatorPage';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -25,7 +26,7 @@ export default function App() {
         >
           <Route path="/lobby" element={<Lobby />} />
           <Route path="/game/:gameId" element={<GamePage />} />
-          <Route path="/profile/:userId" element={<div>Profile (P4)</div>} />
+          <Route path="/profile/:userId" element={<Profile />} />
         </Route>
 
         <Route path="/spectate/:token" element={<SpectatorPage />} />
