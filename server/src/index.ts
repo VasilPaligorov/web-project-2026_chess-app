@@ -6,6 +6,7 @@ import { connectDB } from './config/db';
 import { initIO } from './socket/io';
 import authRoutes from './routes/auth.routes';
 import gameRoutes from './routes/game.routes';
+import userRoutes from './routes/user.routes';
 
 const app = express();
 const httpServer = createServer(app);
@@ -21,6 +22,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);
+app.use('/api/users', userRoutes);
 
 connectDB()
   .then(() => {

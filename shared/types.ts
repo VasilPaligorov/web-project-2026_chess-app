@@ -3,6 +3,10 @@ export interface User {
   username: string;
   email: string;
   elo: number;
+  peakElo: number;
+  wins: number;
+  losses: number;
+  draws: number;
   createdAt: string;
 }
 
@@ -10,6 +14,17 @@ export interface PublicUser {
   _id: string;
   username: string;
   elo: number;
+}
+
+export interface UserStats {
+  _id: string;
+  username: string;
+  elo: number;
+  peakElo: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  createdAt: string;
 }
 
 export type GameStatus = 'waiting' | 'active' | 'finished';
