@@ -44,24 +44,36 @@ async function loadForUser(
   return { game, color };
 }
 
+function applyGameEnd(
+  game: IGame,
+  result: 'white' | 'black' | 'draw',
+  winnerId: mongoose.Types.ObjectId | null,
+  reason: GameOverPayload['reason'],
+): void {
+  game.status = 'finished';
+  game.result = result;
+  game.winner = winnerId;
+  game.endReason = reason;
+  game.finishedAt = new Date();
+  game.drawOffer = null;
+}
+
+function emitGameOver(game: IGame, payload: GameOverPayload): void {
+  getIO()
+    .to(`game:${game._id}`)
+    .to(`spectate:${game.spectatorToken}`)
+    .emit(SocketEvents.GAME_OVER, payload);
+}
+
 async function finishGame(
   game: IGame,
   result: 'white' | 'black' | 'draw',
   winnerId: mongoose.Types.ObjectId | null,
   reason: GameOverPayload['reason'],
 ): Promise<void> {
-  game.status = 'finished';
-  game.result = result;
-  game.winner = winnerId;
-  game.finishedAt = new Date();
-  game.drawOffer = null;
+  applyGameEnd(game, result, winnerId, reason);
   await game.save();
-
-  const payload: GameOverPayload = { winner: result, reason };
-  getIO()
-    .to(`game:${game._id}`)
-    .to(`spectate:${game.spectatorToken}`)
-    .emit(SocketEvents.GAME_OVER, payload);
+  emitGameOver(game, { winner: result, reason });
 }
 
 function loadChess(game: IGame): Chess {
@@ -143,28 +155,28 @@ export function registerGameHandlers(socket: Socket): void {
     game.pgn = chess.pgn();
     game.lastMoveAt = new Date();
 
-    // End-of-game detection (chess.js order matters: checkmate before generic isDraw)
-    let ended = false;
+    // End-of-game detection (chess.js order matters: checkmate before generic isDraw).
+    // Apply state changes in-memory now; emit MOVE_UPDATE first, GAME_OVER second
+    // so clients see the final move animate before the result overlay.
+    let endPayload: GameOverPayload | null = null;
     if (chess.isCheckmate()) {
-      await finishGame(game, color, userIdForColor(game, color), 'checkmate');
-      ended = true;
+      applyGameEnd(game, color, userIdForColor(game, color), 'checkmate');
+      endPayload = { winner: color, reason: 'checkmate' };
     } else if (chess.isStalemate()) {
-      await finishGame(game, 'draw', null, 'stalemate');
-      ended = true;
+      applyGameEnd(game, 'draw', null, 'stalemate');
+      endPayload = { winner: 'draw', reason: 'stalemate' };
     } else if (chess.isInsufficientMaterial()) {
-      await finishGame(game, 'draw', null, 'insufficient_material');
-      ended = true;
+      applyGameEnd(game, 'draw', null, 'insufficient_material');
+      endPayload = { winner: 'draw', reason: 'insufficient_material' };
     } else if (chess.isThreefoldRepetition()) {
-      await finishGame(game, 'draw', null, 'threefold_repetition');
-      ended = true;
+      applyGameEnd(game, 'draw', null, 'threefold_repetition');
+      endPayload = { winner: 'draw', reason: 'threefold_repetition' };
     } else if (chess.isDraw()) {
-      await finishGame(game, 'draw', null, 'fifty_move_rule');
-      ended = true;
+      applyGameEnd(game, 'draw', null, 'fifty_move_rule');
+      endPayload = { winner: 'draw', reason: 'fifty_move_rule' };
     }
 
-    if (!ended) {
-      await game.save();
-    }
+    await game.save();
 
     const update: MoveUpdatePayload = {
       fen: game.fen,
@@ -180,6 +192,10 @@ export function registerGameHandlers(socket: Socket): void {
       .to(`game:${game._id}`)
       .to(`spectate:${game.spectatorToken}`)
       .emit(SocketEvents.MOVE_UPDATE, update);
+
+    if (endPayload) {
+      emitGameOver(game, endPayload);
+    }
   });
 
   socket.on(SocketEvents.GAME_RESIGN, async (gameId: string) => {
@@ -244,6 +260,24 @@ export function registerGameHandlers(socket: Socket): void {
       return;
     }
     await finishGame(game, color, userIdForColor(game, color), 'abandonment');
+  });
+
+  // Explicit leave (e.g. user navigates from /game/:id to /lobby).
+  // Treated as a disconnect: marks `disconnectedSince[color]` and notifies opponent.
+  socket.on(SocketEvents.GAME_LEAVE, async (gameId: string) => {
+    if (typeof gameId !== 'string') return;
+    if (!joinedGames.has(gameId)) return;
+    const loaded = await loadForUser(gameId, userId);
+    socket.leave(`game:${gameId}`);
+    joinedGames.delete(gameId);
+    if (!loaded || loaded.game.status !== 'active') return;
+    const { game, color } = loaded;
+    const now = new Date();
+    game.disconnectedSince[color] = now;
+    game.markModified('disconnectedSince');
+    await game.save();
+    const payload: DisconnectPayload = { color, since: now.toISOString() };
+    socket.to(`game:${gameId}`).emit(SocketEvents.GAME_DISCONNECT, payload);
   });
 
   socket.on('disconnecting', async () => {
