@@ -3,6 +3,10 @@ export interface User {
   username: string;
   email: string;
   elo: number;
+  peakElo: number;
+  wins: number;
+  losses: number;
+  draws: number;
   createdAt: string;
 }
 
@@ -10,6 +14,17 @@ export interface PublicUser {
   _id: string;
   username: string;
   elo: number;
+}
+
+export interface UserStats {
+  _id: string;
+  username: string;
+  elo: number;
+  peakElo: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  createdAt: string;
 }
 
 export type GameStatus = 'waiting' | 'active' | 'finished';
@@ -54,14 +69,14 @@ export interface MoveUpdatePayload {
 export interface GameOverPayload {
   winner: 'white' | 'black' | 'draw';
   reason:
-  | 'checkmate'
-  | 'resignation'
-  | 'stalemate'
-  | 'insufficient_material'
-  | 'threefold_repetition'
-  | 'fifty_move_rule'
-  | 'agreement'
-  | 'abandonment';
+    | 'checkmate'
+    | 'resignation'
+    | 'stalemate'
+    | 'insufficient_material'
+    | 'threefold_repetition'
+    | 'fifty_move_rule'
+    | 'agreement'
+    | 'abandonment';
 }
 
 export interface MoveErrorPayload {
@@ -82,22 +97,22 @@ export interface ReconnectPayload {
 }
 
 export const SocketEvents = {
-  GAME_JOIN: 'game:join',
-  GAME_LEAVE: 'game:leave',
-  GAME_START: 'game:start',
-  GAME_OVER: 'game:over',
-  GAME_RESIGN: 'game:resign',
-  GAME_DISCONNECT: 'game:disconnect',
+  GAME_JOIN:      'game:join',
+  GAME_LEAVE:     'game:leave',
+  GAME_START:     'game:start',
+  GAME_OVER:      'game:over',
+  GAME_RESIGN:    'game:resign',
+  GAME_DISCONNECT:'game:disconnect',
   GAME_RECONNECT: 'game:reconnect',
   GAME_CLAIM_WIN: 'game:claim-win',
   GAME_CLAIM_ERROR: 'game:claim-error',
-  MOVE_MAKE: 'move:make',
-  MOVE_UPDATE: 'move:update',
-  MOVE_ERROR: 'move:error',
-  DRAW_OFFER: 'draw:offer',
-  DRAW_ACCEPT: 'draw:accept',
-  DRAW_DECLINE: 'draw:decline',
-  DRAW_DECLINED: 'draw:declined',
+  MOVE_MAKE:      'move:make',
+  MOVE_UPDATE:    'move:update',
+  MOVE_ERROR:     'move:error',
+  DRAW_OFFER:     'draw:offer',
+  DRAW_ACCEPT:    'draw:accept',
+  DRAW_DECLINE:   'draw:decline',
+  DRAW_DECLINED:  'draw:declined',
   SPECTATOR_JOIN: 'spectator:join',
 } as const;
 

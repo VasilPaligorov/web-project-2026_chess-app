@@ -34,6 +34,7 @@ export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
 
   const chessRef = useRef(new Chess());
   const [game, setGame] = useState<Game | null>(null);
@@ -106,6 +107,15 @@ export default function GamePage() {
       setIncomingDraw(null);
       setDisconnect(null);
       setSecondsLeft(null);
+      // Refresh the cached user so the header's elo/wins/losses updates.
+      api
+        .get<{ success: boolean; data: { user: typeof user } }>('/api/auth/me')
+        .then(({ data }) => {
+          if (data.success && data.data.user) setUser(data.data.user);
+        })
+        .catch(() => {
+          /* leave stale; corrects on next login */
+        });
     };
     const onMoveError = (payload: MoveErrorPayload) => {
       setActionMsg(payload?.message ?? 'Illegal move');
@@ -288,7 +298,7 @@ export default function GamePage() {
         setCopied(true);
         copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
       })
-      .catch(() => { });
+      .catch(() => {});
   };
 
   // ── Render ─────────────────────────────────────────────────────────
