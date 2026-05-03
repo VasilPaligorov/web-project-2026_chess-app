@@ -30,6 +30,7 @@ export interface Game {
   lastMoveAt: string;
   createdAt: string;
   finishedAt: string | null;
+  endReason: GameOverPayload['reason'] | null;
 }
 
 export interface Move {
@@ -82,6 +83,7 @@ export interface ReconnectPayload {
 
 export const SocketEvents = {
   GAME_JOIN: 'game:join',
+  GAME_LEAVE: 'game:leave',
   GAME_START: 'game:start',
   GAME_OVER: 'game:over',
   GAME_RESIGN: 'game:resign',
