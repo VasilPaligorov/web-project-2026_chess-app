@@ -31,11 +31,11 @@ export default function Layout() {
         <nav className={styles.nav}>
           {user && (
             <>
-              <span className={styles.user}>
+              <Link to={`/profile/${user._id}`} className={styles.user}>
                 <span className={styles.userLabel}>Player</span>
                 <span className={styles.userName}>{user.username}</span>
                 <span className={`${styles.userElo} tnum`}>{user.elo}</span>
-              </span>
+              </Link>
               <button onClick={handleLogout} className={styles.logout}>
                 Sign out
               </button>
