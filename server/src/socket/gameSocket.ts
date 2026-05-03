@@ -2,6 +2,7 @@ import { Socket } from 'socket.io';
 import { Chess } from 'chess.js';
 import mongoose from 'mongoose';
 import { Game, IGame } from '../models/Game';
+import { updateElo } from '../services/eloService';
 import { getIO } from './io';
 import {
   SocketEvents,
@@ -65,6 +66,19 @@ function emitGameOver(game: IGame, payload: GameOverPayload): void {
     .emit(SocketEvents.GAME_OVER, payload);
 }
 
+async function applyEloUpdate(game: IGame): Promise<void> {
+  if (game.status !== 'finished' || !game.result || !game.blackPlayer) return;
+  try {
+    await updateElo(
+      String(game.whitePlayer),
+      String(game.blackPlayer),
+      game.result,
+    );
+  } catch (err) {
+    console.error('Elo update failed for game', String(game._id), err);
+  }
+}
+
 async function finishGame(
   game: IGame,
   result: 'white' | 'black' | 'draw',
@@ -73,6 +87,7 @@ async function finishGame(
 ): Promise<void> {
   applyGameEnd(game, result, winnerId, reason);
   await game.save();
+  await applyEloUpdate(game);
   emitGameOver(game, { winner: result, reason });
 }
 
@@ -194,6 +209,7 @@ export function registerGameHandlers(socket: Socket): void {
       .emit(SocketEvents.MOVE_UPDATE, update);
 
     if (endPayload) {
+      await applyEloUpdate(game);
       emitGameOver(game, endPayload);
     }
   });
