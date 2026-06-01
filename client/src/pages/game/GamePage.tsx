@@ -1,6 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard';
+import { Chess, type Square } from 'chess.js';
 import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useGame } from './useGame';
@@ -40,10 +42,45 @@ export default function GamePage() {
   const [confirmResign, setConfirmResign] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
+  // Click-to-move selection. Cleared whenever the board changes from any
+  // source (own move, opponent's move, server reset).
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  useEffect(() => setSelectedSquare(null), [fen]);
+
   const spectatorToken = game?.spectatorToken ?? null;
   const spectatorLink = spectatorToken
     ? `${window.location.origin}/spectate/${spectatorToken}`
     : '';
+
+  // Legal destinations from the selected square: subtle oxblood tint on the
+  // selected square, centered dot on empty destinations, ring on capturable
+  // opponent pieces. Empty when nothing selected, not your turn, or the
+  // square is empty / opponent-owned. chess.js is constructed per recompute
+  // (cheap — only refires when fen or selectedSquare changes).
+  const squareStyles = useMemo<Record<string, CSSProperties>>(() => {
+    if (!selectedSquare || !isMyTurn) return {};
+    let moves: Array<{ to: string; captured?: string }> = [];
+    try {
+      moves = new Chess(fen).moves({
+        square: selectedSquare as Square,
+        verbose: true,
+      }) as typeof moves;
+    } catch {
+      return {};
+    }
+    if (moves.length === 0) return {};
+    const dot =
+      'radial-gradient(circle, rgba(122, 20, 24, 0.45) 22%, transparent 24%)';
+    const ring =
+      'radial-gradient(circle, transparent 56%, rgba(122, 20, 24, 0.55) 56%, rgba(122, 20, 24, 0.55) 64%, transparent 64%)';
+    const out: Record<string, CSSProperties> = {
+      [selectedSquare]: { background: 'rgba(122, 20, 24, 0.28)' },
+    };
+    for (const m of moves) {
+      out[m.to] = { background: m.captured ? ring : dot };
+    }
+    return out;
+  }, [selectedSquare, fen, isMyTurn]);
 
   // Handlers
   const onPieceDrop = useCallback(
@@ -52,6 +89,25 @@ export default function GamePage() {
       return tryMove({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     },
     [tryMove],
+  );
+
+  const onSquareClick = useCallback(
+    ({ square }: { square: string }) => {
+      if (!myColor || game?.status !== 'active' || !isMyTurn) return;
+
+      // Try the move first — tryMove's local probe rejects illegal ones and
+      // returns false. On success the optimistic setFen fires, which clears
+      // the selection via the fen-change effect above.
+      if (selectedSquare && selectedSquare !== square) {
+        if (tryMove({ from: selectedSquare, to: square, promotion: 'q' })) return;
+      }
+
+      // Otherwise toggle / switch selection. (Clicking an empty square also
+      // sets it as selected, but squareStyles renders nothing for a square
+      // with no legal moves, so it's a silent no-op.)
+      setSelectedSquare((prev) => (prev === square ? null : square));
+    },
+    [myColor, game?.status, isMyTurn, selectedSquare, tryMove],
   );
 
   const handleConfirmResign = () => {
@@ -129,6 +185,8 @@ export default function GamePage() {
               id: 'game-board',
               position: fen,
               onPieceDrop,
+              onSquareClick,
+              squareStyles,
               boardOrientation: myColor ?? 'white',
               allowDragging: game.status === 'active' && isMyTurn && !gameOver,
             }}
