@@ -1,0 +1,200 @@
+.list { display: flex; flex-direction: column; }
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: var(--s-2);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  color: var(--oxblood);
+}
+
+.empty {
+  padding: var(--s-12) 0;
+  text-align: center;
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ash);
+}
+
+.emptyState {
+  padding: var(--s-20) var(--s-6);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.emptyGlyph {
+  font-family: var(--font-display);
+  font-size: 6rem;
+  color: var(--ink);
+  opacity: 0.12;
+  line-height: 1;
+}
+
+.emptyHeading {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--ink);
+  margin-top: var(--s-4);
+}
+
+.emptyHint {
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  font-style: italic;
+  color: var(--ash);
+}
+
+/* Rows */
+.rows { display: flex; flex-direction: column; }
+
+.row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-6);
+  padding: var(--s-6) var(--s-3);
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+  transition: background var(--t-fast) var(--ease);
+  animation: rowRise 600ms var(--ease) backwards;
+}
+
+.row:hover { background: rgba(15, 13, 8, 0.03); }
+
+.row:nth-child(1) { animation-delay: 40ms; }
+.row:nth-child(2) { animation-delay: 100ms; }
+.row:nth-child(3) { animation-delay: 160ms; }
+.row:nth-child(4) { animation-delay: 220ms; }
+.row:nth-child(5) { animation-delay: 280ms; }
+.row:nth-child(n+6) { animation-delay: 340ms; }
+
+.rowMine { background: rgba(122, 20, 24, 0.05); }
+.rowMine:hover { background: rgba(122, 20, 24, 0.08); }
+
+.rowMine::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--oxblood);
+}
+
+.rowNumber {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  color: var(--ash);
+  min-width: 2.5em;
+}
+
+.rowMeta { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.rowName {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.youTag {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--oxblood);
+  border: 1px solid var(--oxblood);
+  padding: 2px var(--s-2);
+}
+
+.rowDetails {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  color: var(--ash);
+}
+
+.elo {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  color: var(--ink);
+}
+
+.dot { color: var(--ash-soft); }
+.timestamp { font-style: italic; }
+
+.rowAction { display: flex; justify-content: flex-end; }
+
+.joinBtn,
+.cancelBtn {
+  padding: var(--s-3) var(--s-6);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease);
+}
+
+.joinBtn {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.joinBtn:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+
+.cancelBtn {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--rule);
+}
+
+.cancelBtn:hover:not(:disabled) {
+  border-color: var(--oxblood);
+  color: var(--oxblood);
+}
+
+.joinBtn:disabled,
+.cancelBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+@keyframes rowRise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 880px) {
+  .row {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: var(--s-3) var(--s-4);
+  }
+  .rowAction { grid-column: 1 / -1; justify-content: stretch; }
+  .joinBtn, .cancelBtn { width: 100%; }
+}

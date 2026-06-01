@@ -23,8 +23,6 @@ export interface IGame extends Document {
   pgn: string;
   spectatorToken: string;
   drawOffer: { from: Types.ObjectId } | null;
-  disconnectedSince: { white: Date | null; black: Date | null };
-  lastMoveAt: Date;
   createdAt: Date;
   finishedAt: Date | null;
   endReason: EndReason | null;
@@ -41,11 +39,6 @@ const gameSchema = new Schema<IGame>(
     pgn:            { type: String, default: '' },
     spectatorToken: { type: String, required: true, unique: true, default: () => randomUUID() },
     drawOffer:      { type: { from: { type: Schema.Types.ObjectId, ref: 'User', required: true } }, default: null },
-    disconnectedSince: {
-      white: { type: Date, default: null },
-      black: { type: Date, default: null },
-    },
-    lastMoveAt:  { type: Date, default: () => new Date() },
     finishedAt:  { type: Date, default: null },
     endReason:   {
       type: String,

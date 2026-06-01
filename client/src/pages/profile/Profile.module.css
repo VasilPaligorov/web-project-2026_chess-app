@@ -212,17 +212,22 @@
   }
   
   .row {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: var(--s-6);
+    display: flex;
+    flex-direction: column;
     padding: var(--s-5) var(--s-3);
     border-bottom: 1px solid var(--rule);
     transition: background var(--t-fast) var(--ease);
   }
-  
+
   .row:hover {
     background: rgba(15, 13, 8, 0.025);
+  }
+
+  .rowGrid {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--s-6);
   }
   
   .rowNumber {
@@ -325,8 +330,27 @@
     padding-bottom: 2px;
     transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
   }
-  
+
   .reviewLink:hover {
+    color: var(--oxblood);
+    border-bottom-color: var(--oxblood);
+  }
+
+  .reviewBtn {
+    font-family: var(--font-mono);
+    font-size: var(--t-eyebrow);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--ink);
+    padding: 0 0 2px;
+    cursor: pointer;
+    transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+  }
+
+  .reviewBtn:hover {
     color: var(--oxblood);
     border-bottom-color: var(--oxblood);
   }
@@ -393,7 +417,7 @@
     .stat:nth-child(n+4) {
       border-top: 1px solid var(--rule);
     }
-    .row {
+    .rowGrid {
       grid-template-columns: auto 1fr;
       grid-template-rows: auto auto;
       gap: var(--s-2) var(--s-4);

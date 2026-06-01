@@ -4,6 +4,7 @@ import axios from 'axios';
 import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import type { Game, UserStats } from '../../../../shared/types';
+import { ReplayViewer } from './components/ReplayViewer';
 import styles from './Profile.module.css';
 
 interface UserResponse {
@@ -42,6 +43,7 @@ export default function Profile() {
   const [user, setUser] = useState<UserStats | null>(null);
   const [games, setGames] = useState<Game[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -157,46 +159,59 @@ export default function Profile() {
                   : g.result === myColor
                     ? 'win'
                     : 'loss';
+              const isExpanded = expandedGameId === g._id;
               return (
                 <li key={g._id} className={styles.row}>
-                  <span className={`${styles.rowNumber} tnum`}>
-                    {(i + 1).toString().padStart(2, '0')}.
-                  </span>
-                  <div className={styles.rowMeta}>
-                    <p className={styles.rowOpp}>
-                      <span className={styles.colorBadge}>{myColor === 'white' ? '♔' : '♚'}</span>
-                      vs {opponent?.username ?? '—'}
-                      {opponent && (
-                        <span className={`${styles.oppElo} tnum`}>{opponent.elo}</span>
-                      )}
-                    </p>
-                    <p className={styles.rowDetails}>
-                      <span className={`${styles.outcome} ${styles[`outcome_${outcome}`]}`}>
-                        {outcome.toUpperCase()}
-                      </span>
-                      {g.endReason && (
-                        <>
-                          <span className={styles.dot}>·</span>
-                          <span className={styles.reason}>
-                            {g.endReason.replace(/_/g, ' ')}
-                          </span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <div className={styles.rowAction}>
-                    <span className={styles.rowDate}>
-                      {g.finishedAt ? formatDate(g.finishedAt) : ''}
+                  <div className={styles.rowGrid}>
+                    <span className={`${styles.rowNumber} tnum`}>
+                      {(i + 1).toString().padStart(2, '0')}.
                     </span>
-                    {g.spectatorToken && (
-                      <Link
-                        to={`/spectate/${g.spectatorToken}`}
-                        className={styles.reviewLink}
+                    <div className={styles.rowMeta}>
+                      <p className={styles.rowOpp}>
+                        <span className={styles.colorBadge}>{myColor === 'white' ? '♔' : '♚'}</span>
+                        vs {opponent?.username ?? '—'}
+                        {opponent && (
+                          <span className={`${styles.oppElo} tnum`}>{opponent.elo}</span>
+                        )}
+                      </p>
+                      <p className={styles.rowDetails}>
+                        <span className={`${styles.outcome} ${styles[`outcome_${outcome}`]}`}>
+                          {outcome.toUpperCase()}
+                        </span>
+                        {g.endReason && (
+                          <>
+                            <span className={styles.dot}>·</span>
+                            <span className={styles.reason}>
+                              {g.endReason.replace(/_/g, ' ')}
+                            </span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <div className={styles.rowAction}>
+                      <span className={styles.rowDate}>
+                        {g.finishedAt ? formatDate(g.finishedAt) : ''}
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.reviewBtn}
+                        onClick={() => setExpandedGameId(isExpanded ? null : g._id)}
+                        aria-expanded={isExpanded}
+                        aria-controls={`replay-${g._id}`}
                       >
-                        Review →
-                      </Link>
-                    )}
+                        {isExpanded ? 'Close replay' : 'Open replay →'}
+                      </button>
+                    </div>
                   </div>
+                  {isExpanded && (
+                    <div id={`replay-${g._id}`}>
+                      <ReplayViewer
+                        game={g}
+                        viewerColor={myColor}
+                        onClose={() => setExpandedGameId(null)}
+                      />
+                    </div>
+                  )}
                 </li>
               );
             })}
