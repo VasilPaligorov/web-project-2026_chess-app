@@ -1,0 +1,85 @@
+.toast {
+  position: fixed;
+  bottom: var(--s-8);
+  right: var(--s-8);
+  z-index: 50;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--oxblood);
+  box-shadow: var(--shadow-md);
+  padding: var(--s-4) var(--s-5);
+  width: min(320px, calc(100vw - var(--s-12)));
+  animation: rise 320ms var(--ease) backwards;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin: 0;
+}
+
+.body {
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  color: var(--ink);
+  margin: var(--s-2) 0 var(--s-3);
+}
+
+.actions {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: flex-end;
+  margin-top: var(--s-4);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: var(--s-2) var(--s-5);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease);
+}
+
+.ghost:hover {
+  border-color: var(--ink);
+}
+
+.primary {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: var(--s-2) var(--s-5);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease);
+}
+
+.primary:hover {
+  background: var(--oxblood);
+  border-color: var(--oxblood);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 880px) {
+  .toast {
+    bottom: var(--s-4);
+    right: var(--s-4);
+    left: var(--s-4);
+    width: auto;
+  }
+}

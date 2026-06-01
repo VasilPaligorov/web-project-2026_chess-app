@@ -15,6 +15,11 @@ import {
 
 type Color = 'white' | 'black';
 
+interface GameEnd {
+  result: 'white' | 'black' | 'draw';
+  reason: GameOverPayload['reason'];
+}
+
 function colorOf(game: IGame, userId: string): Color | null {
   if (game.whitePlayer.toString() === userId) return 'white';
   if (game.blackPlayer?.toString() === userId) return 'black';
@@ -31,6 +36,29 @@ function userIdForColor(game: IGame, c: Color): mongoose.Types.ObjectId | null {
     : (game.blackPlayer as mongoose.Types.ObjectId | null);
 }
 
+function detectGameEnd(chess: Chess, moverColor: Color): GameEnd | null {
+  if (chess.isCheckmate()) return { result: moverColor, reason: 'checkmate' };
+  if (chess.isStalemate()) return { result: 'draw', reason: 'stalemate' };
+  if (chess.isInsufficientMaterial()) return { result: 'draw', reason: 'insufficient_material' };
+  if (chess.isThreefoldRepetition()) return { result: 'draw', reason: 'threefold_repetition' };
+  if (chess.isDraw()) return { result: 'draw', reason: 'fifty_move_rule' };
+  return null;
+}
+
+function loadChess(game: IGame): Chess {
+  const chess = new Chess();
+  if (game.pgn) {
+    try {
+      chess.loadPgn(game.pgn);
+      return chess;
+    } catch {}
+  }
+  if (game.fen) {
+    chess.load(game.fen);
+  }
+  return chess;
+}
+
 async function loadForUser(
   gameId: string,
   userId: string,
@@ -41,6 +69,15 @@ async function loadForUser(
   const color = colorOf(game, userId);
   if (!color) return null;
   return { game, color };
+}
+
+async function loadActiveGameForUser(
+  gameId: string,
+  userId: string,
+): Promise<{ game: IGame; color: Color } | null> {
+  const loaded = await loadForUser(gameId, userId);
+  if (!loaded || loaded.game.status !== 'active') return null;
+  return loaded;
 }
 
 function applyGameEnd(
@@ -89,154 +126,132 @@ async function finishGame(
   emitGameOver(game, { winner: result, reason });
 }
 
-function loadChess(game: IGame): Chess {
-  const chess = new Chess();
-  if (game.pgn) {
-    try {
-      chess.loadPgn(game.pgn);
-      return chess;
-    } catch {
-      /* fall through to FEN */
-    }
+async function onGameJoin(socket: Socket, userId: string, gameId: string): Promise<void> {
+  if (typeof gameId !== 'string') return;
+  const loaded = await loadForUser(gameId, userId);
+  if (!loaded) return;
+  socket.join(`game:${gameId}`);
+}
+
+async function onMoveMake(
+  socket: Socket,
+  userId: string,
+  payload: MovePayload,
+): Promise<void> {
+  if (!payload || typeof payload.gameId !== 'string' || !payload.move) return;
+  const loaded = await loadForUser(payload.gameId, userId);
+  if (!loaded) return;
+  const { game, color } = loaded;
+
+  if (game.status !== 'active') {
+    socket.emit(SocketEvents.MOVE_ERROR, { message: 'Game is not active' } as MoveErrorPayload);
+    return;
   }
-  if (game.fen) {
-    chess.load(game.fen);
+
+  const chess = loadChess(game);
+  const expected = color === 'white' ? 'w' : 'b';
+  if (chess.turn() !== expected) {
+    socket.emit(SocketEvents.MOVE_ERROR, { message: "It's not your turn" } as MoveErrorPayload);
+    return;
   }
-  return chess;
+
+  let made;
+  try {
+    made = chess.move({
+      from: payload.move.from,
+      to: payload.move.to,
+      promotion: payload.move.promotion ?? 'q',
+    });
+  } catch {
+    socket.emit(SocketEvents.MOVE_ERROR, { message: 'Illegal move' } as MoveErrorPayload);
+    return;
+  }
+  if (!made) {
+    socket.emit(SocketEvents.MOVE_ERROR, { message: 'Illegal move' } as MoveErrorPayload);
+    return;
+  }
+
+  game.fen = chess.fen();
+  game.pgn = chess.pgn();
+
+  const end = detectGameEnd(chess, color);
+  if (end) {
+    const winnerId = end.result === 'draw' ? null : userIdForColor(game, end.result);
+    applyGameEnd(game, end.result, winnerId, end.reason);
+  }
+
+  await game.save();
+
+  const update: MoveUpdatePayload = {
+    fen: game.fen,
+    pgn: game.pgn,
+    turn: chess.turn(),
+    lastMove: {
+      from: payload.move.from,
+      to: payload.move.to,
+      promotion: payload.move.promotion,
+    },
+  };
+  getIO()
+    .to(`game:${game._id}`)
+    .to(`spectate:${game.spectatorToken}`)
+    .emit(SocketEvents.MOVE_UPDATE, update);
+
+  if (end) {
+    await applyEloUpdate(game);
+    emitGameOver(game, { winner: end.result, reason: end.reason });
+  }
+}
+
+async function onGameResign(socket: Socket, userId: string, gameId: string): Promise<void> {
+  if (typeof gameId !== 'string') return;
+  const loaded = await loadActiveGameForUser(gameId, userId);
+  if (!loaded) return;
+  const { game, color } = loaded;
+  const winnerColor = opponent(color);
+  await finishGame(game, winnerColor, userIdForColor(game, winnerColor), 'resignation');
+}
+
+async function onDrawOffer(socket: Socket, userId: string, gameId: string): Promise<void> {
+  if (typeof gameId !== 'string') return;
+  const loaded = await loadActiveGameForUser(gameId, userId);
+  if (!loaded) return;
+  const { game, color } = loaded;
+  if (game.drawOffer) return;
+  game.drawOffer = { from: new mongoose.Types.ObjectId(userId) };
+  await game.save();
+  const payload: DrawOfferPayload = { from: color };
+  socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_OFFER, payload);
+}
+
+async function onDrawAccept(socket: Socket, userId: string, gameId: string): Promise<void> {
+  if (typeof gameId !== 'string') return;
+  const loaded = await loadActiveGameForUser(gameId, userId);
+  if (!loaded) return;
+  const { game } = loaded;
+  if (!game.drawOffer || game.drawOffer.from.toString() === userId) return;
+  await finishGame(game, 'draw', null, 'agreement');
+}
+
+async function onDrawDecline(socket: Socket, userId: string, gameId: string): Promise<void> {
+  if (typeof gameId !== 'string') return;
+  const loaded = await loadActiveGameForUser(gameId, userId);
+  if (!loaded) return;
+  const { game } = loaded;
+  if (!game.drawOffer || game.drawOffer.from.toString() === userId) return;
+  game.drawOffer = null;
+  await game.save();
+  socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_DECLINED);
 }
 
 export function registerGameHandlers(socket: Socket): void {
   const userId = socket.data.userId;
-  if (!userId) return; // unauthenticated socket — gameplay events not allowed
+  if (!userId) return;
 
-  socket.on(SocketEvents.GAME_JOIN, async (gameId: string) => {
-    if (typeof gameId !== 'string') return;
-    const loaded = await loadForUser(gameId, userId);
-    if (!loaded) return;
-
-    socket.join(`game:${gameId}`);
-  });
-
-  socket.on(SocketEvents.MOVE_MAKE, async (payload: MovePayload) => {
-    if (!payload || typeof payload.gameId !== 'string' || !payload.move) return;
-    const loaded = await loadForUser(payload.gameId, userId);
-    if (!loaded) return;
-    const { game, color } = loaded;
-
-    if (game.status !== 'active') {
-      socket.emit(SocketEvents.MOVE_ERROR, { message: 'Game is not active' } as MoveErrorPayload);
-      return;
-    }
-
-    const chess = loadChess(game);
-    const expected = color === 'white' ? 'w' : 'b';
-    if (chess.turn() !== expected) {
-      socket.emit(SocketEvents.MOVE_ERROR, { message: "It's not your turn" } as MoveErrorPayload);
-      return;
-    }
-
-    let made;
-    try {
-      made = chess.move({
-        from: payload.move.from,
-        to: payload.move.to,
-        promotion: payload.move.promotion ?? 'q',
-      });
-    } catch {
-      socket.emit(SocketEvents.MOVE_ERROR, { message: 'Illegal move' } as MoveErrorPayload);
-      return;
-    }
-    if (!made) {
-      socket.emit(SocketEvents.MOVE_ERROR, { message: 'Illegal move' } as MoveErrorPayload);
-      return;
-    }
-
-    game.fen = chess.fen();
-    game.pgn = chess.pgn();
-
-    // End-of-game detection (chess.js order matters: checkmate before generic isDraw).
-    // Apply state changes in-memory now; emit MOVE_UPDATE first, GAME_OVER second
-    // so clients see the final move animate before the result overlay.
-    let endPayload: GameOverPayload | null = null;
-    if (chess.isCheckmate()) {
-      applyGameEnd(game, color, userIdForColor(game, color), 'checkmate');
-      endPayload = { winner: color, reason: 'checkmate' };
-    } else if (chess.isStalemate()) {
-      applyGameEnd(game, 'draw', null, 'stalemate');
-      endPayload = { winner: 'draw', reason: 'stalemate' };
-    } else if (chess.isInsufficientMaterial()) {
-      applyGameEnd(game, 'draw', null, 'insufficient_material');
-      endPayload = { winner: 'draw', reason: 'insufficient_material' };
-    } else if (chess.isThreefoldRepetition()) {
-      applyGameEnd(game, 'draw', null, 'threefold_repetition');
-      endPayload = { winner: 'draw', reason: 'threefold_repetition' };
-    } else if (chess.isDraw()) {
-      applyGameEnd(game, 'draw', null, 'fifty_move_rule');
-      endPayload = { winner: 'draw', reason: 'fifty_move_rule' };
-    }
-
-    await game.save();
-
-    const update: MoveUpdatePayload = {
-      fen: game.fen,
-      pgn: game.pgn,
-      turn: chess.turn(),
-      lastMove: {
-        from: payload.move.from,
-        to: payload.move.to,
-        promotion: payload.move.promotion,
-      },
-    };
-    getIO()
-      .to(`game:${game._id}`)
-      .to(`spectate:${game.spectatorToken}`)
-      .emit(SocketEvents.MOVE_UPDATE, update);
-
-    if (endPayload) {
-      await applyEloUpdate(game);
-      emitGameOver(game, endPayload);
-    }
-  });
-
-  socket.on(SocketEvents.GAME_RESIGN, async (gameId: string) => {
-    if (typeof gameId !== 'string') return;
-    const loaded = await loadForUser(gameId, userId);
-    if (!loaded || loaded.game.status !== 'active') return;
-    const { game, color } = loaded;
-    const winnerColor = opponent(color);
-    await finishGame(game, winnerColor, userIdForColor(game, winnerColor), 'resignation');
-  });
-
-  socket.on(SocketEvents.DRAW_OFFER, async (gameId: string) => {
-    if (typeof gameId !== 'string') return;
-    const loaded = await loadForUser(gameId, userId);
-    if (!loaded || loaded.game.status !== 'active') return;
-    const { game, color } = loaded;
-    if (game.drawOffer) return; // already pending
-    game.drawOffer = { from: new mongoose.Types.ObjectId(userId) };
-    await game.save();
-    const payload: DrawOfferPayload = { from: color };
-    socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_OFFER, payload);
-  });
-
-  socket.on(SocketEvents.DRAW_ACCEPT, async (gameId: string) => {
-    if (typeof gameId !== 'string') return;
-    const loaded = await loadForUser(gameId, userId);
-    if (!loaded || loaded.game.status !== 'active') return;
-    const { game } = loaded;
-    if (!game.drawOffer || game.drawOffer.from.toString() === userId) return;
-    await finishGame(game, 'draw', null, 'agreement');
-  });
-
-  socket.on(SocketEvents.DRAW_DECLINE, async (gameId: string) => {
-    if (typeof gameId !== 'string') return;
-    const loaded = await loadForUser(gameId, userId);
-    if (!loaded || loaded.game.status !== 'active') return;
-    const { game } = loaded;
-    if (!game.drawOffer || game.drawOffer.from.toString() === userId) return;
-    game.drawOffer = null;
-    await game.save();
-    socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_DECLINED);
-  });
-
+  socket.on(SocketEvents.GAME_JOIN,    (id: string)           => onGameJoin(socket, userId, id));
+  socket.on(SocketEvents.MOVE_MAKE,    (payload: MovePayload) => onMoveMake(socket, userId, payload));
+  socket.on(SocketEvents.GAME_RESIGN,  (id: string)           => onGameResign(socket, userId, id));
+  socket.on(SocketEvents.DRAW_OFFER,   (id: string)           => onDrawOffer(socket, userId, id));
+  socket.on(SocketEvents.DRAW_ACCEPT,  (id: string)           => onDrawAccept(socket, userId, id));
+  socket.on(SocketEvents.DRAW_DECLINE, (id: string)           => onDrawDecline(socket, userId, id));
 }

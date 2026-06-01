@@ -1,230 +1,103 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Chess } from 'chess.js';
 import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard';
-import axios from 'axios';
+import { Chess, type Square } from 'chess.js';
 import api from '../../services/api';
-import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
-import {
-  SocketEvents,
-  type DrawOfferPayload,
-  type Game,
-  type GameOverPayload,
-  type MoveErrorPayload,
-  type MoveUpdatePayload,
-} from '../../../../shared/types';
+import { useGame } from './useGame';
+import { GameHeader } from './components/GameHeader';
+import { WaitingOverlay } from './components/WaitingOverlay';
+import { GameOverOverlay } from './components/GameOverOverlay';
+import { ShareModal } from './components/ShareModal';
+import { ResignConfirmModal } from './components/ResignConfirmModal';
+import { DrawOfferToast } from './components/DrawOfferToast';
 import styles from './GamePage.module.css';
-
-type Color = 'white' | 'black';
-
-const REASON_COPY: Record<GameOverPayload['reason'], string> = {
-  checkmate: 'by checkmate',
-  resignation: 'by resignation',
-  stalemate: 'by stalemate',
-  insufficient_material: 'by insufficient material',
-  threefold_repetition: 'by threefold repetition',
-  fifty_move_rule: 'by the fifty-move rule',
-  agreement: 'by agreement',
-  abandonment: 'by abandonment',
-};
 
 export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const setUser = useAuthStore((s) => s.setUser);
 
-  const chessRef = useRef(new Chess());
-  const [game, setGame] = useState<Game | null>(null);
-  const [fen, setFen] = useState<string>(chessRef.current.fen());
-  const [pageError, setPageError] = useState<string | null>(null);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const {
+    game,
+    fen,
+    pageError,
+    actionMsg,
+    gameOver,
+    incomingDraw,
+    drawPending,
+    myColor,
+    opponent,
+    isMyTurn,
+    announce,
+    tryMove,
+    resign,
+    offerDraw,
+    acceptDraw,
+    declineDraw,
+  } = useGame(gameId);
 
-  const [gameOver, setGameOver] = useState<GameOverPayload | null>(null);
-  const [incomingDraw, setIncomingDraw] = useState<DrawOfferPayload | null>(null);
-  const [drawPending, setDrawPending] = useState(false);
   const [confirmResign, setConfirmResign] = useState(false);
-
-  // Share-modal state (P5 markup preserved)
-  const [menuOpen, setMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Derived
-  const myColor: Color | null = useMemo(() => {
-    if (!game || !user) return null;
-    if (game.whitePlayer._id === user._id) return 'white';
-    if (game.blackPlayer?._id === user._id) return 'black';
-    return null;
-  }, [game, user]);
-
-  const opponent = game && myColor
-    ? (myColor === 'white' ? game.blackPlayer : game.whitePlayer)
-    : null;
-
-  const isMyTurn = useMemo(() => {
-    if (!myColor || game?.status !== 'active') return false;
-    // Parse turn from the FEN directly — chessRef is updated in a useEffect that
-    // runs after render, so reading chessRef.current.turn() here would be stale
-    // for the very first render after a move.
-    const turn = fen.split(' ')[1];
-    return (turn === 'w' && myColor === 'white') || (turn === 'b' && myColor === 'black');
-  }, [fen, myColor, game?.status]);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  useEffect(() => setSelectedSquare(null), [fen]);
 
   const spectatorToken = game?.spectatorToken ?? null;
   const spectatorLink = spectatorToken
     ? `${window.location.origin}/spectate/${spectatorToken}`
     : '';
 
-  // Reflect FEN into the chess.js instance whenever it changes
-  useEffect(() => {
+  const squareStyles = useMemo<Record<string, CSSProperties>>(() => {
+    if (!selectedSquare || !isMyTurn) return {};
+    let moves: Array<{ to: string; captured?: string }> = [];
     try {
-      chessRef.current.load(fen);
+      moves = new Chess(fen).moves({
+        square: selectedSquare as Square,
+        verbose: true,
+      }) as typeof moves;
     } catch {
-      /* malformed FEN — ignore */
+      return {};
     }
-  }, [fen]);
-
-  // Fetch and subscribe
-  useEffect(() => {
-    if (!gameId) return;
-
-    let cancelled = false;
-    const socket = getSocket();
-
-    const onMoveUpdate = (payload: MoveUpdatePayload) => {
-      setFen(payload.fen);
+    if (moves.length === 0) return {};
+    const dot =
+      'radial-gradient(circle, rgba(122, 20, 24, 0.45) 22%, transparent 24%)';
+    const ring =
+      'radial-gradient(circle, transparent 56%, rgba(122, 20, 24, 0.55) 56%, rgba(122, 20, 24, 0.55) 64%, transparent 64%)';
+    const out: Record<string, CSSProperties> = {
+      [selectedSquare]: { background: 'rgba(122, 20, 24, 0.28)' },
     };
-    const onGameOver = (payload: GameOverPayload) => {
-      setGameOver(payload);
-      setDrawPending(false);
-      setIncomingDraw(null);
-      // Refresh the cached user so the header's elo/wins/losses updates.
-      api
-        .get<{ success: boolean; data: { user: typeof user } }>('/api/auth/me')
-        .then(({ data }) => {
-          if (data.success && data.data.user) setUser(data.data.user);
-        })
-        .catch(() => {
-          /* leave stale; corrects on next login */
-        });
-    };
-    const onMoveError = (payload: MoveErrorPayload) => {
-      setActionMsg(payload?.message ?? 'Illegal move');
-    };
-    const onDrawOffer = (payload: DrawOfferPayload) => {
-      setIncomingDraw(payload);
-    };
-    const onDrawDeclined = () => {
-      setDrawPending(false);
-      setActionMsg('Draw declined');
-    };
-
-    socket.on(SocketEvents.MOVE_UPDATE, onMoveUpdate);
-    socket.on(SocketEvents.GAME_OVER, onGameOver);
-    socket.on(SocketEvents.MOVE_ERROR, onMoveError);
-    socket.on(SocketEvents.DRAW_OFFER, onDrawOffer);
-    socket.on(SocketEvents.DRAW_DECLINED, onDrawDeclined);
-
-    api
-      .get<{ success: boolean; data: Game }>(`/api/games/${gameId}`)
-      .then(({ data }) => {
-        if (cancelled || !data.success) return;
-        setGame(data.data);
-        setFen(data.data.fen);
-        if (data.data.status === 'finished' && data.data.result && data.data.endReason) {
-          setGameOver({ winner: data.data.result, reason: data.data.endReason });
-        }
-        socket.emit(SocketEvents.GAME_JOIN, gameId);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (axios.isAxiosError(err) && err.response?.status === 404) {
-          setPageError('Game not found');
-        } else {
-          setPageError('Could not load game');
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      socket.off(SocketEvents.MOVE_UPDATE, onMoveUpdate);
-      socket.off(SocketEvents.GAME_OVER, onGameOver);
-      socket.off(SocketEvents.MOVE_ERROR, onMoveError);
-      socket.off(SocketEvents.DRAW_OFFER, onDrawOffer);
-      socket.off(SocketEvents.DRAW_DECLINED, onDrawDeclined);
-    };
-  }, [gameId, user?._id]);
-
-  // Click outside to close menu
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+    for (const m of moves) {
+      out[m.to] = { background: m.captured ? ring : dot };
     }
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, []);
+    return out;
+  }, [selectedSquare, fen, isMyTurn]);
 
-  // Cleanup copy timeout on unmount
-  useEffect(() => () => {
-    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-  }, []);
-
-  // Fade action message after 3s
-  useEffect(() => {
-    if (!actionMsg) return;
-    const id = setTimeout(() => setActionMsg(null), 3000);
-    return () => clearTimeout(id);
-  }, [actionMsg]);
-
-  // Handlers
   const onPieceDrop = useCallback(
     ({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean => {
-      if (!targetSquare || !gameId || game?.status !== 'active' || !isMyTurn) return false;
-      // Optimistic local validation just for UX (server is authoritative)
-      const probe = new Chess(chessRef.current.fen());
-      try {
-        probe.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
-      } catch {
-        return false;
-      }
-      getSocket().emit(SocketEvents.MOVE_MAKE, {
-        gameId,
-        move: { from: sourceSquare, to: targetSquare, promotion: 'q' },
-      });
-      return true;
+      if (!targetSquare) return false;
+      return tryMove({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     },
-    [gameId, game?.status, isMyTurn],
+    [tryMove],
   );
 
-  const handleResign = () => {
-    if (!gameId) return;
-    getSocket().emit(SocketEvents.GAME_RESIGN, gameId);
+  const onSquareClick = useCallback(
+    ({ square }: { square: string }) => {
+      if (!myColor || game?.status !== 'active' || !isMyTurn) return;
+
+      if (selectedSquare && selectedSquare !== square) {
+        if (tryMove({ from: selectedSquare, to: square, promotion: 'q' })) return;
+      }
+
+      setSelectedSquare((prev) => (prev === square ? null : square));
+    },
+    [myColor, game?.status, isMyTurn, selectedSquare, tryMove],
+  );
+
+  const handleConfirmResign = () => {
+    resign();
     setConfirmResign(false);
-  };
-
-  const handleOfferDraw = () => {
-    if (!gameId || drawPending) return;
-    getSocket().emit(SocketEvents.DRAW_OFFER, gameId);
-    setDrawPending(true);
-    setActionMsg('Draw offer sent');
-  };
-
-  const handleAcceptDraw = () => {
-    if (!gameId) return;
-    getSocket().emit(SocketEvents.DRAW_ACCEPT, gameId);
-    setIncomingDraw(null);
-  };
-
-  const handleDeclineDraw = () => {
-    if (!gameId) return;
-    getSocket().emit(SocketEvents.DRAW_DECLINE, gameId);
-    setIncomingDraw(null);
   };
 
   const handleCancelWaiting = async () => {
@@ -233,23 +106,9 @@ export default function GamePage() {
       await api.delete(`/api/games/${gameId}`);
       navigate('/lobby');
     } catch {
-      setActionMsg('Could not cancel');
+      announce('Could not cancel');
     }
   };
-
-  const handleCopy = () => {
-    if (!spectatorLink) return;
-    navigator.clipboard
-      .writeText(spectatorLink)
-      .then(() => {
-        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-        setCopied(true);
-        copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {});
-  };
-
-  // ── Render ─────────────────────────────────────────────────────────
 
   if (pageError) {
     return (
@@ -283,70 +142,14 @@ export default function GamePage() {
           ? 'Your move'
           : `${opponent?.username ?? 'Opponent'} to play`;
 
-  const winnerName =
-    !gameOver
-      ? null
-      : gameOver.winner === 'draw'
-        ? null
-        : gameOver.winner === 'white'
-          ? game.whitePlayer.username
-          : game.blackPlayer?.username ?? '—';
-
   return (
     <div className={styles.page}>
-      {/* ── Header ── */}
-      <header className={styles.header}>
-        <div className={styles.headerMeta}>
-          <p className={styles.eyebrow}>
-            Match <span className={styles.folioNum}>Nº {String(game._id).slice(-4).toUpperCase()}</span>
-          </p>
-          <h1 className={styles.title}>
-            <span className={styles.player}>
-              {game.whitePlayer.username}
-              <span className={`${styles.playerElo} tnum`}>{game.whitePlayer.elo}</span>
-            </span>
-            <span className={styles.vs}>vs</span>
-            <span className={styles.player}>
-              {game.blackPlayer?.username ?? '—'}
-              {game.blackPlayer && (
-                <span className={`${styles.playerElo} tnum`}>{game.blackPlayer.elo}</span>
-              )}
-            </span>
-          </h1>
-        </div>
+      <GameHeader
+        game={game}
+        spectatorEnabled={!!spectatorToken}
+        onShareClick={() => setShareOpen(true)}
+      />
 
-        <div className={styles.toolbar}>
-          <div className={styles.menu} ref={menuRef}>
-            <button
-              type="button"
-              className={styles['menu-trigger']}
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label="Game options"
-              disabled={!spectatorToken}
-            >
-              <span className={styles.dot} />
-              <span className={styles.dot} />
-              <span className={styles.dot} />
-            </button>
-            {menuOpen && (
-              <div className={styles['menu-dropdown']}>
-                <button
-                  type="button"
-                  className={styles['menu-item']}
-                  onClick={() => {
-                    setShareOpen(true);
-                    setMenuOpen(false);
-                  }}
-                >
-                  Share spectator link
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* ── Status strip ── */}
       <div className={styles.status}>
         <span className={styles.statusEyebrow}>{myColorLabel}</span>
         <span className={styles.statusRule} />
@@ -356,7 +159,6 @@ export default function GamePage() {
         {actionMsg && <span className={styles.actionMsg}>{actionMsg}</span>}
       </div>
 
-      {/* ── Board ── */}
       <div className={styles.boardArea}>
         <div className={styles['board-wrapper']}>
           <Chessboard
@@ -364,67 +166,35 @@ export default function GamePage() {
               id: 'game-board',
               position: fen,
               onPieceDrop,
+              onSquareClick,
+              squareStyles,
               boardOrientation: myColor ?? 'white',
               allowDragging: game.status === 'active' && isMyTurn && !gameOver,
             }}
           />
 
-          {/* Waiting overlay */}
           {game.status === 'waiting' && !gameOver && (
-            <div className={styles.boardOverlay}>
-              <p className={styles.overlayEyebrow}>Awaiting opponent</p>
-              <p className={styles.overlayHeadline}>The board is set.</p>
-              <p className={styles.overlayLede}>
-                Share the spectator link, or wait for someone to take the seat.
-              </p>
-              <div className={styles.overlayActions}>
-                <button
-                  className={styles.overlayPrimary}
-                  onClick={() => setShareOpen(true)}
-                  disabled={!spectatorToken}
-                >
-                  Share link
-                </button>
-                <button className={styles.overlaySecondary} onClick={handleCancelWaiting}>
-                  Cancel game
-                </button>
-              </div>
-            </div>
+            <WaitingOverlay
+              spectatorEnabled={!!spectatorToken}
+              onShare={() => setShareOpen(true)}
+              onCancel={handleCancelWaiting}
+            />
           )}
 
-          {/* Game-over overlay */}
           {gameOver && (
-            <div className={`${styles.boardOverlay} ${styles.boardOverlayDark}`}>
-              <p className={styles.overlayEyebrow}>Match concluded</p>
-              <p className={styles.overlayHeadline}>
-                {gameOver.winner === 'draw' ? (
-                  'Drawn'
-                ) : (
-                  <>
-                    <span className={styles.overlayWinner}>{winnerName}</span>{' '}
-                    <span className={styles.overlayWins}>wins</span>
-                  </>
-                )}
-              </p>
-              <p className={styles.overlayReason}>{REASON_COPY[gameOver.reason]}</p>
-              <div className={styles.overlayActions}>
-                <button
-                  className={styles.overlayPrimary}
-                  onClick={() => navigate('/lobby')}
-                >
-                  Back to lobby
-                </button>
-              </div>
-            </div>
+            <GameOverOverlay
+              game={game}
+              payload={gameOver}
+              onBack={() => navigate('/lobby')}
+            />
           )}
         </div>
 
-        {/* Action rail */}
         {game.status === 'active' && !gameOver && myColor && (
           <div className={styles.actionRail}>
             <button
               className={styles.actionBtn}
-              onClick={handleOfferDraw}
+              onClick={offerDraw}
               disabled={drawPending}
             >
               {drawPending ? 'Draw offered…' : 'Offer draw'}
@@ -439,92 +209,23 @@ export default function GamePage() {
         )}
       </div>
 
-      {/* ── Modals ── */}
-
-      {/* Share modal (P5 markup preserved) */}
       {shareOpen && (
-        <div className={styles['modal-backdrop']} onClick={() => setShareOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles['modal-header']}>
-              <p className={styles['modal-eyebrow']}>Spectator link</p>
-              <button
-                type="button"
-                className={styles['modal-close']}
-                onClick={() => setShareOpen(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <p className={styles['modal-hint']}>
-              Share this link with anyone who wants to watch the game.
-            </p>
-            <div className={styles['modal-row']}>
-              <input
-                className={styles['modal-input']}
-                type="text"
-                readOnly
-                value={spectatorLink}
-                onFocus={(e) => e.target.select()}
-              />
-              <button
-                type="button"
-                className={styles['modal-copy']}
-                onClick={handleCopy}
-              >
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ShareModal link={spectatorLink} onClose={() => setShareOpen(false)} />
       )}
 
-      {/* Resign confirm */}
       {confirmResign && (
-        <div className={styles['modal-backdrop']} onClick={() => setConfirmResign(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles['modal-header']}>
-              <p className={styles['modal-eyebrow']}>Resign?</p>
-              <button
-                type="button"
-                className={styles['modal-close']}
-                onClick={() => setConfirmResign(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <p className={styles['modal-hint']}>
-              Your opponent will be awarded the win.
-            </p>
-            <div className={styles.modalActions}>
-              <button className={styles.modalGhost} onClick={() => setConfirmResign(false)}>
-                Cancel
-              </button>
-              <button className={styles.modalDanger} onClick={handleResign}>
-                Resign
-              </button>
-            </div>
-          </div>
-        </div>
+        <ResignConfirmModal
+          onConfirm={handleConfirmResign}
+          onCancel={() => setConfirmResign(false)}
+        />
       )}
 
-      {/* Incoming draw offer */}
       {incomingDraw && !gameOver && (
-        <div className={styles.drawToast} role="dialog">
-          <p className={styles['modal-eyebrow']}>Draw offered</p>
-          <p className={styles.drawToastBody}>
-            {opponent?.username ?? 'Opponent'} offers a draw.
-          </p>
-          <div className={styles.modalActions}>
-            <button className={styles.modalGhost} onClick={handleDeclineDraw}>
-              Decline
-            </button>
-            <button className={styles.modalPrimary} onClick={handleAcceptDraw}>
-              Accept
-            </button>
-          </div>
-        </div>
+        <DrawOfferToast
+          opponentName={opponent?.username ?? 'Opponent'}
+          onAccept={acceptDraw}
+          onDecline={declineDraw}
+        />
       )}
     </div>
   );
