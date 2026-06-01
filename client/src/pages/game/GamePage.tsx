@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard';
 import api from '../../services/api';
@@ -7,6 +7,9 @@ import { useGame } from './useGame';
 import { GameHeader } from './components/GameHeader';
 import { WaitingOverlay } from './components/WaitingOverlay';
 import { GameOverOverlay } from './components/GameOverOverlay';
+import { ShareModal } from './components/ShareModal';
+import { ResignConfirmModal } from './components/ResignConfirmModal';
+import { DrawOfferToast } from './components/DrawOfferToast';
 import styles from './GamePage.module.css';
 
 export default function GamePage() {
@@ -33,21 +36,14 @@ export default function GamePage() {
     declineDraw,
   } = useGame(gameId);
 
-  // UI-only state (modal gates — extracted in later commits)
+  // Modal gates — the modal components own their internal state.
   const [confirmResign, setConfirmResign] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const spectatorToken = game?.spectatorToken ?? null;
   const spectatorLink = spectatorToken
     ? `${window.location.origin}/spectate/${spectatorToken}`
     : '';
-
-  // Cleanup copy timeout on unmount
-  useEffect(() => () => {
-    if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-  }, []);
 
   // Handlers
   const onPieceDrop = useCallback(
@@ -71,18 +67,6 @@ export default function GamePage() {
     } catch {
       announce('Could not cancel');
     }
-  };
-
-  const handleCopy = () => {
-    if (!spectatorLink) return;
-    navigator.clipboard
-      .writeText(spectatorLink)
-      .then(() => {
-        if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-        setCopied(true);
-        copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {});
   };
 
   // ── Render ─────────────────────────────────────────────────────────
@@ -187,92 +171,23 @@ export default function GamePage() {
         )}
       </div>
 
-      {/* ── Modals ── */}
-
-      {/* Share modal (P5 markup preserved) */}
       {shareOpen && (
-        <div className={styles['modal-backdrop']} onClick={() => setShareOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles['modal-header']}>
-              <p className={styles['modal-eyebrow']}>Spectator link</p>
-              <button
-                type="button"
-                className={styles['modal-close']}
-                onClick={() => setShareOpen(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <p className={styles['modal-hint']}>
-              Share this link with anyone who wants to watch the game.
-            </p>
-            <div className={styles['modal-row']}>
-              <input
-                className={styles['modal-input']}
-                type="text"
-                readOnly
-                value={spectatorLink}
-                onFocus={(e) => e.target.select()}
-              />
-              <button
-                type="button"
-                className={styles['modal-copy']}
-                onClick={handleCopy}
-              >
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ShareModal link={spectatorLink} onClose={() => setShareOpen(false)} />
       )}
 
-      {/* Resign confirm */}
       {confirmResign && (
-        <div className={styles['modal-backdrop']} onClick={() => setConfirmResign(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles['modal-header']}>
-              <p className={styles['modal-eyebrow']}>Resign?</p>
-              <button
-                type="button"
-                className={styles['modal-close']}
-                onClick={() => setConfirmResign(false)}
-                aria-label="Close"
-              >
-                ×
-              </button>
-            </div>
-            <p className={styles['modal-hint']}>
-              Your opponent will be awarded the win.
-            </p>
-            <div className={styles.modalActions}>
-              <button className={styles.modalGhost} onClick={() => setConfirmResign(false)}>
-                Cancel
-              </button>
-              <button className={styles.modalDanger} onClick={handleConfirmResign}>
-                Resign
-              </button>
-            </div>
-          </div>
-        </div>
+        <ResignConfirmModal
+          onConfirm={handleConfirmResign}
+          onCancel={() => setConfirmResign(false)}
+        />
       )}
 
-      {/* Incoming draw offer */}
       {incomingDraw && !gameOver && (
-        <div className={styles.drawToast} role="dialog">
-          <p className={styles['modal-eyebrow']}>Draw offered</p>
-          <p className={styles.drawToastBody}>
-            {opponent?.username ?? 'Opponent'} offers a draw.
-          </p>
-          <div className={styles.modalActions}>
-            <button className={styles.modalGhost} onClick={declineDraw}>
-              Decline
-            </button>
-            <button className={styles.modalPrimary} onClick={acceptDraw}>
-              Accept
-            </button>
-          </div>
-        </div>
+        <DrawOfferToast
+          opponentName={opponent?.username ?? 'Opponent'}
+          onAccept={acceptDraw}
+          onDecline={declineDraw}
+        />
       )}
     </div>
   );
