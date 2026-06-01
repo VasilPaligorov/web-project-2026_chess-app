@@ -5,6 +5,7 @@ import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { REASON_COPY, winnerNameFor } from './game.utils';
 import { useGame } from './useGame';
+import { GameHeader } from './components/GameHeader';
 import styles from './GamePage.module.css';
 
 export default function GamePage() {
@@ -31,29 +32,16 @@ export default function GamePage() {
     declineDraw,
   } = useGame(gameId);
 
-  // UI-only state (modal/menu gates — extracted in later commits)
+  // UI-only state (modal gates — extracted in later commits)
   const [confirmResign, setConfirmResign] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const spectatorToken = game?.spectatorToken ?? null;
   const spectatorLink = spectatorToken
     ? `${window.location.origin}/spectate/${spectatorToken}`
     : '';
-
-  // Click outside to close menu
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, []);
 
   // Cleanup copy timeout on unmount
   useEffect(() => () => {
@@ -134,57 +122,11 @@ export default function GamePage() {
 
   return (
     <div className={styles.page}>
-      {/* ── Header ── */}
-      <header className={styles.header}>
-        <div className={styles.headerMeta}>
-          <p className={styles.eyebrow}>
-            Match <span className={styles.folioNum}>Nº {String(game._id).slice(-4).toUpperCase()}</span>
-          </p>
-          <h1 className={styles.title}>
-            <span className={styles.player}>
-              {game.whitePlayer.username}
-              <span className={`${styles.playerElo} tnum`}>{game.whitePlayer.elo}</span>
-            </span>
-            <span className={styles.vs}>vs</span>
-            <span className={styles.player}>
-              {game.blackPlayer?.username ?? '—'}
-              {game.blackPlayer && (
-                <span className={`${styles.playerElo} tnum`}>{game.blackPlayer.elo}</span>
-              )}
-            </span>
-          </h1>
-        </div>
-
-        <div className={styles.toolbar}>
-          <div className={styles.menu} ref={menuRef}>
-            <button
-              type="button"
-              className={styles['menu-trigger']}
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label="Game options"
-              disabled={!spectatorToken}
-            >
-              <span className={styles.dot} />
-              <span className={styles.dot} />
-              <span className={styles.dot} />
-            </button>
-            {menuOpen && (
-              <div className={styles['menu-dropdown']}>
-                <button
-                  type="button"
-                  className={styles['menu-item']}
-                  onClick={() => {
-                    setShareOpen(true);
-                    setMenuOpen(false);
-                  }}
-                >
-                  Share spectator link
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      <GameHeader
+        game={game}
+        spectatorEnabled={!!spectatorToken}
+        onShareClick={() => setShareOpen(true)}
+      />
 
       {/* ── Status strip ── */}
       <div className={styles.status}>
