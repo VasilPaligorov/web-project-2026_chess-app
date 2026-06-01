@@ -14,20 +14,14 @@ import {
   type MoveErrorPayload,
   type MoveUpdatePayload,
 } from '../../../../shared/types';
+import {
+  REASON_COPY,
+  getMyColor,
+  turnFromFen,
+  winnerNameFor,
+  type Color,
+} from './game.utils';
 import styles from './GamePage.module.css';
-
-type Color = 'white' | 'black';
-
-const REASON_COPY: Record<GameOverPayload['reason'], string> = {
-  checkmate: 'by checkmate',
-  resignation: 'by resignation',
-  stalemate: 'by stalemate',
-  insufficient_material: 'by insufficient material',
-  threefold_repetition: 'by threefold repetition',
-  fifty_move_rule: 'by the fifty-move rule',
-  agreement: 'by agreement',
-  abandonment: 'by abandonment',
-};
 
 export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -54,12 +48,10 @@ export default function GamePage() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Derived
-  const myColor: Color | null = useMemo(() => {
-    if (!game || !user) return null;
-    if (game.whitePlayer._id === user._id) return 'white';
-    if (game.blackPlayer?._id === user._id) return 'black';
-    return null;
-  }, [game, user]);
+  const myColor: Color | null = useMemo(
+    () => getMyColor(game, user?._id),
+    [game, user?._id],
+  );
 
   const opponent = game && myColor
     ? (myColor === 'white' ? game.blackPlayer : game.whitePlayer)
@@ -67,10 +59,7 @@ export default function GamePage() {
 
   const isMyTurn = useMemo(() => {
     if (!myColor || game?.status !== 'active') return false;
-    // Parse turn from the FEN directly — chessRef is updated in a useEffect that
-    // runs after render, so reading chessRef.current.turn() here would be stale
-    // for the very first render after a move.
-    const turn = fen.split(' ')[1];
+    const turn = turnFromFen(fen);
     return (turn === 'w' && myColor === 'white') || (turn === 'b' && myColor === 'black');
   }, [fen, myColor, game?.status]);
 
@@ -283,14 +272,7 @@ export default function GamePage() {
           ? 'Your move'
           : `${opponent?.username ?? 'Opponent'} to play`;
 
-  const winnerName =
-    !gameOver
-      ? null
-      : gameOver.winner === 'draw'
-        ? null
-        : gameOver.winner === 'white'
-          ? game.whitePlayer.username
-          : game.blackPlayer?.username ?? '—';
+  const winnerName = gameOver ? winnerNameFor(game, gameOver) : null;
 
   return (
     <div className={styles.page}>

@@ -1,4 +1,5 @@
 import type { Game } from '../../../../../shared/types';
+import { turnFromFen } from '../../game/game.utils';
 import { relativeTime } from '../lobby.utils';
 import styles from './ActiveGamesList.module.css';
 
@@ -61,8 +62,7 @@ function GameRow({ game, index, currentUserId, onResume }: RowProps) {
   const iAmWhite = game.whitePlayer._id === currentUserId;
   const opponent = iAmWhite ? game.blackPlayer : game.whitePlayer;
 
-  // Parse turn from FEN: index 1 of the space-separated string is 'w' or 'b'.
-  const fenTurn = game.fen.split(' ')[1];
+  const fenTurn = turnFromFen(game.fen);
   const myTurn =
     (fenTurn === 'w' && iAmWhite) || (fenTurn === 'b' && !iAmWhite);
 
