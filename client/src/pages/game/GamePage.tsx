@@ -1,152 +1,48 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Chess } from 'chess.js';
 import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard';
-import axios from 'axios';
 import api from '../../services/api';
-import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
-import {
-  SocketEvents,
-  type DrawOfferPayload,
-  type Game,
-  type GameOverPayload,
-  type MoveErrorPayload,
-  type MoveUpdatePayload,
-} from '../../../../shared/types';
-import {
-  REASON_COPY,
-  getMyColor,
-  turnFromFen,
-  winnerNameFor,
-  type Color,
-} from './game.utils';
+import { REASON_COPY, winnerNameFor } from './game.utils';
+import { useGame } from './useGame';
 import styles from './GamePage.module.css';
 
 export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const setUser = useAuthStore((s) => s.setUser);
 
-  const chessRef = useRef(new Chess());
-  const [game, setGame] = useState<Game | null>(null);
-  const [fen, setFen] = useState<string>(chessRef.current.fen());
-  const [pageError, setPageError] = useState<string | null>(null);
-  const [actionMsg, setActionMsg] = useState<string | null>(null);
+  const {
+    game,
+    fen,
+    pageError,
+    actionMsg,
+    gameOver,
+    incomingDraw,
+    drawPending,
+    myColor,
+    opponent,
+    isMyTurn,
+    announce,
+    tryMove,
+    resign,
+    offerDraw,
+    acceptDraw,
+    declineDraw,
+  } = useGame(gameId);
 
-  const [gameOver, setGameOver] = useState<GameOverPayload | null>(null);
-  const [incomingDraw, setIncomingDraw] = useState<DrawOfferPayload | null>(null);
-  const [drawPending, setDrawPending] = useState(false);
+  // UI-only state (modal/menu gates — extracted in later commits)
   const [confirmResign, setConfirmResign] = useState(false);
-
-  // Share-modal state (P5 markup preserved)
   const [menuOpen, setMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Derived
-  const myColor: Color | null = useMemo(
-    () => getMyColor(game, user?._id),
-    [game, user?._id],
-  );
-
-  const opponent = game && myColor
-    ? (myColor === 'white' ? game.blackPlayer : game.whitePlayer)
-    : null;
-
-  const isMyTurn = useMemo(() => {
-    if (!myColor || game?.status !== 'active') return false;
-    const turn = turnFromFen(fen);
-    return (turn === 'w' && myColor === 'white') || (turn === 'b' && myColor === 'black');
-  }, [fen, myColor, game?.status]);
-
   const spectatorToken = game?.spectatorToken ?? null;
   const spectatorLink = spectatorToken
     ? `${window.location.origin}/spectate/${spectatorToken}`
     : '';
-
-  // Reflect FEN into the chess.js instance whenever it changes
-  useEffect(() => {
-    try {
-      chessRef.current.load(fen);
-    } catch {
-      /* malformed FEN — ignore */
-    }
-  }, [fen]);
-
-  // Fetch and subscribe
-  useEffect(() => {
-    if (!gameId) return;
-
-    let cancelled = false;
-    const socket = getSocket();
-
-    const onMoveUpdate = (payload: MoveUpdatePayload) => {
-      setFen(payload.fen);
-    };
-    const onGameOver = (payload: GameOverPayload) => {
-      setGameOver(payload);
-      setDrawPending(false);
-      setIncomingDraw(null);
-      // Refresh the cached user so the header's elo/wins/losses updates.
-      api
-        .get<{ success: boolean; data: { user: typeof user } }>('/api/auth/me')
-        .then(({ data }) => {
-          if (data.success && data.data.user) setUser(data.data.user);
-        })
-        .catch(() => {
-          /* leave stale; corrects on next login */
-        });
-    };
-    const onMoveError = (payload: MoveErrorPayload) => {
-      setActionMsg(payload?.message ?? 'Illegal move');
-    };
-    const onDrawOffer = (payload: DrawOfferPayload) => {
-      setIncomingDraw(payload);
-    };
-    const onDrawDeclined = () => {
-      setDrawPending(false);
-      setActionMsg('Draw declined');
-    };
-
-    socket.on(SocketEvents.MOVE_UPDATE, onMoveUpdate);
-    socket.on(SocketEvents.GAME_OVER, onGameOver);
-    socket.on(SocketEvents.MOVE_ERROR, onMoveError);
-    socket.on(SocketEvents.DRAW_OFFER, onDrawOffer);
-    socket.on(SocketEvents.DRAW_DECLINED, onDrawDeclined);
-
-    api
-      .get<{ success: boolean; data: Game }>(`/api/games/${gameId}`)
-      .then(({ data }) => {
-        if (cancelled || !data.success) return;
-        setGame(data.data);
-        setFen(data.data.fen);
-        if (data.data.status === 'finished' && data.data.result && data.data.endReason) {
-          setGameOver({ winner: data.data.result, reason: data.data.endReason });
-        }
-        socket.emit(SocketEvents.GAME_JOIN, gameId);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (axios.isAxiosError(err) && err.response?.status === 404) {
-          setPageError('Game not found');
-        } else {
-          setPageError('Could not load game');
-        }
-      });
-
-    return () => {
-      cancelled = true;
-      socket.off(SocketEvents.MOVE_UPDATE, onMoveUpdate);
-      socket.off(SocketEvents.GAME_OVER, onGameOver);
-      socket.off(SocketEvents.MOVE_ERROR, onMoveError);
-      socket.off(SocketEvents.DRAW_OFFER, onDrawOffer);
-      socket.off(SocketEvents.DRAW_DECLINED, onDrawDeclined);
-    };
-  }, [gameId, user?._id]);
 
   // Click outside to close menu
   useEffect(() => {
@@ -164,56 +60,18 @@ export default function GamePage() {
     if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
   }, []);
 
-  // Fade action message after 3s
-  useEffect(() => {
-    if (!actionMsg) return;
-    const id = setTimeout(() => setActionMsg(null), 3000);
-    return () => clearTimeout(id);
-  }, [actionMsg]);
-
   // Handlers
   const onPieceDrop = useCallback(
     ({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean => {
-      if (!targetSquare || !gameId || game?.status !== 'active' || !isMyTurn) return false;
-      // Optimistic local validation just for UX (server is authoritative)
-      const probe = new Chess(chessRef.current.fen());
-      try {
-        probe.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
-      } catch {
-        return false;
-      }
-      getSocket().emit(SocketEvents.MOVE_MAKE, {
-        gameId,
-        move: { from: sourceSquare, to: targetSquare, promotion: 'q' },
-      });
-      return true;
+      if (!targetSquare) return false;
+      return tryMove({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     },
-    [gameId, game?.status, isMyTurn],
+    [tryMove],
   );
 
-  const handleResign = () => {
-    if (!gameId) return;
-    getSocket().emit(SocketEvents.GAME_RESIGN, gameId);
+  const handleConfirmResign = () => {
+    resign();
     setConfirmResign(false);
-  };
-
-  const handleOfferDraw = () => {
-    if (!gameId || drawPending) return;
-    getSocket().emit(SocketEvents.DRAW_OFFER, gameId);
-    setDrawPending(true);
-    setActionMsg('Draw offer sent');
-  };
-
-  const handleAcceptDraw = () => {
-    if (!gameId) return;
-    getSocket().emit(SocketEvents.DRAW_ACCEPT, gameId);
-    setIncomingDraw(null);
-  };
-
-  const handleDeclineDraw = () => {
-    if (!gameId) return;
-    getSocket().emit(SocketEvents.DRAW_DECLINE, gameId);
-    setIncomingDraw(null);
   };
 
   const handleCancelWaiting = async () => {
@@ -222,7 +80,7 @@ export default function GamePage() {
       await api.delete(`/api/games/${gameId}`);
       navigate('/lobby');
     } catch {
-      setActionMsg('Could not cancel');
+      announce('Could not cancel');
     }
   };
 
@@ -406,7 +264,7 @@ export default function GamePage() {
           <div className={styles.actionRail}>
             <button
               className={styles.actionBtn}
-              onClick={handleOfferDraw}
+              onClick={offerDraw}
               disabled={drawPending}
             >
               {drawPending ? 'Draw offered…' : 'Offer draw'}
@@ -483,7 +341,7 @@ export default function GamePage() {
               <button className={styles.modalGhost} onClick={() => setConfirmResign(false)}>
                 Cancel
               </button>
-              <button className={styles.modalDanger} onClick={handleResign}>
+              <button className={styles.modalDanger} onClick={handleConfirmResign}>
                 Resign
               </button>
             </div>
@@ -499,10 +357,10 @@ export default function GamePage() {
             {opponent?.username ?? 'Opponent'} offers a draw.
           </p>
           <div className={styles.modalActions}>
-            <button className={styles.modalGhost} onClick={handleDeclineDraw}>
+            <button className={styles.modalGhost} onClick={declineDraw}>
               Decline
             </button>
-            <button className={styles.modalPrimary} onClick={handleAcceptDraw}>
+            <button className={styles.modalPrimary} onClick={acceptDraw}>
               Accept
             </button>
           </div>
