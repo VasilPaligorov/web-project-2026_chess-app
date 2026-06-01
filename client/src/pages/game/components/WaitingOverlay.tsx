@@ -6,7 +6,6 @@ interface Props {
   onCancel: () => void;
 }
 
-/** Renders over the board while the game is in `waiting` state (no opponent yet). */
 export function WaitingOverlay({ spectatorEnabled, onShare, onCancel }: Props) {
   return (
     <div className={styles.overlay}>

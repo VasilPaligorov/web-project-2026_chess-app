@@ -2,7 +2,6 @@ import type { Game, GameOverPayload } from '../../../../shared/types';
 
 export type Color = 'white' | 'black';
 
-/** Human-readable suffix for every game-end reason emitted by the server. */
 export const REASON_COPY: Record<GameOverPayload['reason'], string> = {
   checkmate: 'by checkmate',
   resignation: 'by resignation',
@@ -14,7 +13,6 @@ export const REASON_COPY: Record<GameOverPayload['reason'], string> = {
   abandonment: 'by abandonment',
 };
 
-/** Which side of the board the given user is on, or null if they're a spectator. */
 export function getMyColor(
   game: Game | null,
   userId: string | undefined,
@@ -25,16 +23,10 @@ export function getMyColor(
   return null;
 }
 
-/**
- * Extract the active color from a FEN string ('w' or 'b'). Parsing the FEN
- * directly avoids stale reads from a chess.js instance that may have been
- * updated in a useEffect that runs after render.
- */
 export function turnFromFen(fen: string): 'w' | 'b' {
   return fen.split(' ')[1] === 'b' ? 'b' : 'w';
 }
 
-/** Username of the winning player on a finished game, or null for a draw. */
 export function winnerNameFor(
   game: Game,
   payload: GameOverPayload,

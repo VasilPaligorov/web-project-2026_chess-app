@@ -20,8 +20,6 @@ interface GameEnd {
   reason: GameOverPayload['reason'];
 }
 
-// ── Pure helpers ───────────────────────────────────────────────────
-
 function colorOf(game: IGame, userId: string): Color | null {
   if (game.whitePlayer.toString() === userId) return 'white';
   if (game.blackPlayer?.toString() === userId) return 'black';
@@ -38,12 +36,6 @@ function userIdForColor(game: IGame, c: Color): mongoose.Types.ObjectId | null {
     : (game.blackPlayer as mongoose.Types.ObjectId | null);
 }
 
-/**
- * Detect whether the position after a move terminates the game. The chess.js
- * checks are order-sensitive: checkmate must be tested before the generic
- * isDraw, and the more specific draw reasons (stalemate, insufficient material,
- * threefold) are tested before the catch-all 50-move rule.
- */
 function detectGameEnd(chess: Chess, moverColor: Color): GameEnd | null {
   if (chess.isCheckmate()) return { result: moverColor, reason: 'checkmate' };
   if (chess.isStalemate()) return { result: 'draw', reason: 'stalemate' };
@@ -59,17 +51,13 @@ function loadChess(game: IGame): Chess {
     try {
       chess.loadPgn(game.pgn);
       return chess;
-    } catch {
-      /* fall through to FEN */
-    }
+    } catch {}
   }
   if (game.fen) {
     chess.load(game.fen);
   }
   return chess;
 }
-
-// ── DB loaders ─────────────────────────────────────────────────────
 
 async function loadForUser(
   gameId: string,
@@ -83,12 +71,6 @@ async function loadForUser(
   return { game, color };
 }
 
-/**
- * The common precondition shared by every action-emitting handler: the game
- * exists, the user is one of the two players, and the game is currently
- * `active`. MOVE_MAKE deliberately does not use this — it emits a richer
- * "Game is not active" error so the client can surface it.
- */
 async function loadActiveGameForUser(
   gameId: string,
   userId: string,
@@ -97,8 +79,6 @@ async function loadActiveGameForUser(
   if (!loaded || loaded.game.status !== 'active') return null;
   return loaded;
 }
-
-// ── Game-end mutators ──────────────────────────────────────────────
 
 function applyGameEnd(
   game: IGame,
@@ -145,8 +125,6 @@ async function finishGame(
   await applyEloUpdate(game);
   emitGameOver(game, { winner: result, reason });
 }
-
-// ── Named event handlers ───────────────────────────────────────────
 
 async function onGameJoin(socket: Socket, userId: string, gameId: string): Promise<void> {
   if (typeof gameId !== 'string') return;
@@ -196,8 +174,6 @@ async function onMoveMake(
   game.fen = chess.fen();
   game.pgn = chess.pgn();
 
-  // Apply end-of-game state in-memory now; emit MOVE_UPDATE first, GAME_OVER
-  // second so clients see the final move animate before the result overlay.
   const end = detectGameEnd(chess, color);
   if (end) {
     const winnerId = end.result === 'draw' ? null : userIdForColor(game, end.result);
@@ -241,7 +217,7 @@ async function onDrawOffer(socket: Socket, userId: string, gameId: string): Prom
   const loaded = await loadActiveGameForUser(gameId, userId);
   if (!loaded) return;
   const { game, color } = loaded;
-  if (game.drawOffer) return; // already pending
+  if (game.drawOffer) return;
   game.drawOffer = { from: new mongoose.Types.ObjectId(userId) };
   await game.save();
   const payload: DrawOfferPayload = { from: color };
@@ -268,11 +244,9 @@ async function onDrawDecline(socket: Socket, userId: string, gameId: string): Pr
   socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_DECLINED);
 }
 
-// ── Registration ───────────────────────────────────────────────────
-
 export function registerGameHandlers(socket: Socket): void {
   const userId = socket.data.userId;
-  if (!userId) return; // unauthenticated socket — gameplay events not allowed
+  if (!userId) return;
 
   socket.on(SocketEvents.GAME_JOIN,    (id: string)           => onGameJoin(socket, userId, id));
   socket.on(SocketEvents.MOVE_MAKE,    (payload: MovePayload) => onMoveMake(socket, userId, payload));

@@ -38,12 +38,9 @@ export default function GamePage() {
     declineDraw,
   } = useGame(gameId);
 
-  // Modal gates — the modal components own their internal state.
   const [confirmResign, setConfirmResign] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
-  // Click-to-move selection. Cleared whenever the board changes from any
-  // source (own move, opponent's move, server reset).
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   useEffect(() => setSelectedSquare(null), [fen]);
 
@@ -52,11 +49,6 @@ export default function GamePage() {
     ? `${window.location.origin}/spectate/${spectatorToken}`
     : '';
 
-  // Legal destinations from the selected square: subtle oxblood tint on the
-  // selected square, centered dot on empty destinations, ring on capturable
-  // opponent pieces. Empty when nothing selected, not your turn, or the
-  // square is empty / opponent-owned. chess.js is constructed per recompute
-  // (cheap — only refires when fen or selectedSquare changes).
   const squareStyles = useMemo<Record<string, CSSProperties>>(() => {
     if (!selectedSquare || !isMyTurn) return {};
     let moves: Array<{ to: string; captured?: string }> = [];
@@ -82,7 +74,6 @@ export default function GamePage() {
     return out;
   }, [selectedSquare, fen, isMyTurn]);
 
-  // Handlers
   const onPieceDrop = useCallback(
     ({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean => {
       if (!targetSquare) return false;
@@ -95,16 +86,10 @@ export default function GamePage() {
     ({ square }: { square: string }) => {
       if (!myColor || game?.status !== 'active' || !isMyTurn) return;
 
-      // Try the move first — tryMove's local probe rejects illegal ones and
-      // returns false. On success the optimistic setFen fires, which clears
-      // the selection via the fen-change effect above.
       if (selectedSquare && selectedSquare !== square) {
         if (tryMove({ from: selectedSquare, to: square, promotion: 'q' })) return;
       }
 
-      // Otherwise toggle / switch selection. (Clicking an empty square also
-      // sets it as selected, but squareStyles renders nothing for a square
-      // with no legal moves, so it's a silent no-op.)
       setSelectedSquare((prev) => (prev === square ? null : square));
     },
     [myColor, game?.status, isMyTurn, selectedSquare, tryMove],
@@ -124,8 +109,6 @@ export default function GamePage() {
       announce('Could not cancel');
     }
   };
-
-  // ── Render ─────────────────────────────────────────────────────────
 
   if (pageError) {
     return (
@@ -167,7 +150,6 @@ export default function GamePage() {
         onShareClick={() => setShareOpen(true)}
       />
 
-      {/* ── Status strip ── */}
       <div className={styles.status}>
         <span className={styles.statusEyebrow}>{myColorLabel}</span>
         <span className={styles.statusRule} />
@@ -177,7 +159,6 @@ export default function GamePage() {
         {actionMsg && <span className={styles.actionMsg}>{actionMsg}</span>}
       </div>
 
-      {/* ── Board ── */}
       <div className={styles.boardArea}>
         <div className={styles['board-wrapper']}>
           <Chessboard
@@ -209,7 +190,6 @@ export default function GamePage() {
           )}
         </div>
 
-        {/* Action rail */}
         {game.status === 'active' && !gameOver && myColor && (
           <div className={styles.actionRail}>
             <button

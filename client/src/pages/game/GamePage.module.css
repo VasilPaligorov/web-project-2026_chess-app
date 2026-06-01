@@ -9,8 +9,6 @@
   margin-inline: auto;
 }
 
-/* ── Status strip ── */
-
 .status {
   display: flex;
   align-items: baseline;
@@ -58,8 +56,6 @@
   animation: fadeIn 200ms var(--ease);
 }
 
-/* ── Board area ── */
-
 .boardArea {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -74,8 +70,6 @@
   margin-inline: auto;
   isolation: isolate;
 }
-
-/* ── Action rail (right side) ── */
 
 .actionRail {
   display: flex;
@@ -117,8 +111,6 @@
   color: var(--paper);
   border-color: var(--oxblood);
 }
-
-/* ── Loading / error ── */
 
 .loading {
   margin: var(--s-20) auto;
@@ -173,8 +165,6 @@
     opacity: 1;
   }
 }
-
-/* ── Mobile ── */
 
 @media (max-width: 880px) {
   .boardArea {

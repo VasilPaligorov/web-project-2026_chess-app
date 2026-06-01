@@ -5,7 +5,6 @@ interface Props {
   onCancel: () => void;
 }
 
-/** Confirmation dialog before a player resigns. */
 export function ResignConfirmModal({ onConfirm, onCancel }: Props) {
   return (
     <div className={styles.backdrop} onClick={onCancel}>

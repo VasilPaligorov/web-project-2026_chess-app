@@ -16,7 +16,6 @@ import {
 import { getMyColor, turnFromFen, type Color } from './game.utils';
 
 interface UseGameResult {
-  // Snapshot
   game: Game | null;
   fen: string;
   pageError: string | null;
@@ -24,11 +23,9 @@ interface UseGameResult {
   gameOver: GameOverPayload | null;
   incomingDraw: DrawOfferPayload | null;
   drawPending: boolean;
-  // Derived
   myColor: Color | null;
   opponent: Game['whitePlayer'] | null;
   isMyTurn: boolean;
-  // Actions
   announce: (msg: string) => void;
   tryMove: (move: Move) => boolean;
   resign: () => void;
@@ -37,16 +34,6 @@ interface UseGameResult {
   declineDraw: () => void;
 }
 
-/**
- * Owns the live state of a single game page: the cached `Game`, the current
- * FEN, the game-over banner, draw-offer flow, and the socket subscription.
- * Mounting the hook fetches `/api/games/:id`, joins the `game:{id}` socket
- * room, and subscribes to MOVE_UPDATE / GAME_OVER / MOVE_ERROR / DRAW_OFFER /
- * DRAW_DECLINED. Unmounting tears the subscriptions down.
- *
- * The chess.js instance lives in a ref (no re-render churn) and is kept in
- * sync with `fen` via a post-render effect.
- */
 export function useGame(gameId: string | undefined): UseGameResult {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
@@ -60,7 +47,6 @@ export function useGame(gameId: string | undefined): UseGameResult {
   const [incomingDraw, setIncomingDraw] = useState<DrawOfferPayload | null>(null);
   const [drawPending, setDrawPending] = useState(false);
 
-  // ── Derived ────────────────────────────────────────────────────────
   const myColor = useMemo(() => getMyColor(game, user?._id), [game, user?._id]);
 
   const opponent = game && myColor
@@ -73,19 +59,12 @@ export function useGame(gameId: string | undefined): UseGameResult {
     return (turn === 'w' && myColor === 'white') || (turn === 'b' && myColor === 'black');
   }, [fen, myColor, game?.status]);
 
-  // ── Effects ────────────────────────────────────────────────────────
-
-  // Reflect FEN into the chess.js instance whenever it changes
   useEffect(() => {
     try {
       chessRef.current.load(fen);
-    } catch {
-      /* malformed FEN — ignore */
-    }
+    } catch {}
   }, [fen]);
 
-  // Fetch the game, join the room, and subscribe. Cancellation guards the
-  // initial fetch against an unmount before the response lands.
   useEffect(() => {
     if (!gameId) return;
 
@@ -99,15 +78,12 @@ export function useGame(gameId: string | undefined): UseGameResult {
       setGameOver(payload);
       setDrawPending(false);
       setIncomingDraw(null);
-      // Refresh the cached user so the header's elo/wins/losses updates.
       api
         .get<{ success: boolean; data: { user: typeof user } }>('/api/auth/me')
         .then(({ data }) => {
           if (data.success && data.data.user) setUser(data.data.user);
         })
-        .catch(() => {
-          /* leave stale; corrects on next login */
-        });
+        .catch(() => {});
     };
     const onMoveError = (payload: MoveErrorPayload) => {
       setActionMsg(payload?.message ?? 'Illegal move');
@@ -156,21 +132,17 @@ export function useGame(gameId: string | undefined): UseGameResult {
     };
   }, [gameId, user?._id, setUser]);
 
-  // Fade action message after 3s
   useEffect(() => {
     if (!actionMsg) return;
     const id = setTimeout(() => setActionMsg(null), 3000);
     return () => clearTimeout(id);
   }, [actionMsg]);
 
-  // ── Actions ────────────────────────────────────────────────────────
-
   const announce = useCallback((msg: string) => setActionMsg(msg), []);
 
   const tryMove = useCallback(
     (move: Move): boolean => {
       if (!gameId || game?.status !== 'active' || !isMyTurn) return false;
-      // Optimistic local validation just for UX (server is authoritative)
       const probe = new Chess(chessRef.current.fen());
       try {
         probe.move({ from: move.from, to: move.to, promotion: move.promotion ?? 'q' });

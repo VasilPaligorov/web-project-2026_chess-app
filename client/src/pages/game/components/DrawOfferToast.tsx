@@ -6,7 +6,6 @@ interface Props {
   onDecline: () => void;
 }
 
-/** Bottom-right toast that prompts the user to accept or decline a draw offer. */
 export function DrawOfferToast({ opponentName, onAccept, onDecline }: Props) {
   return (
     <div className={styles.toast} role="dialog">

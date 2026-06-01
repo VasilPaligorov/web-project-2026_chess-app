@@ -6,12 +6,6 @@ interface Props {
   onClose: () => void;
 }
 
-/**
- * Spectator-link share modal. Owns its own "Copied!" feedback state and the
- * timeout that resets it after 2s — no other component needs them, and tying
- * the lifecycle to the modal mount means reopening it never shows stale
- * feedback.
- */
 export function ShareModal({ link, onClose }: Props) {
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

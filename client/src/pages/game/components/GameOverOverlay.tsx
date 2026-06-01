@@ -8,7 +8,6 @@ interface Props {
   onBack: () => void;
 }
 
-/** Renders over the board once a game has finished (any result + reason). */
 export function GameOverOverlay({ game, payload, onBack }: Props) {
   const winnerName = winnerNameFor(game, payload);
   return (

@@ -8,12 +8,6 @@ interface Props {
   onShareClick: () => void;
 }
 
-/**
- * Top of the game page: the match-number eyebrow, the two player names with
- * elos, and the kebab menu that opens the spectator share modal. Owns the
- * menu's open/close state and the click-outside listener — no other component
- * needs it.
- */
 export function GameHeader({ game, spectatorEnabled, onShareClick }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
