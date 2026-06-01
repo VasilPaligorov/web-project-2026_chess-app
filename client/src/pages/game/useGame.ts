@@ -177,6 +177,7 @@ export function useGame(gameId: string | undefined): UseGameResult {
       } catch {
         return false;
       }
+      setFen(probe.fen());
       getSocket().emit(SocketEvents.MOVE_MAKE, { gameId, move });
       return true;
     },
