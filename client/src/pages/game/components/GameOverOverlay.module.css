@@ -1,0 +1,88 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  padding: var(--s-6);
+  background: rgba(15, 13, 8, 0.88);
+  color: var(--paper);
+  text-align: center;
+  animation: fadeIn 350ms var(--ease) backwards;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--paper-deep);
+  opacity: 0.7;
+  margin: 0;
+}
+
+.headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  line-height: 1.05;
+  letter-spacing: -0.018em;
+  color: var(--paper);
+  margin: 0;
+}
+
+.winner {
+  color: var(--paper);
+  font-style: italic;
+}
+
+.wins {
+  color: inherit;
+}
+
+.reason {
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  font-style: italic;
+  color: var(--paper-edge);
+  opacity: 0.85;
+  margin: 0;
+}
+
+.actions {
+  margin-top: var(--s-4);
+  display: flex;
+  gap: var(--s-3);
+}
+
+.primary {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: var(--s-3) var(--s-6);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+  transition:
+    background var(--t-fast) var(--ease),
+    border-color var(--t-fast) var(--ease);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--oxblood);
+  border-color: var(--oxblood);
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

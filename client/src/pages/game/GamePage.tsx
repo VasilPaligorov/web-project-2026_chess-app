@@ -3,9 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard';
 import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
-import { REASON_COPY, winnerNameFor } from './game.utils';
 import { useGame } from './useGame';
 import { GameHeader } from './components/GameHeader';
+import { WaitingOverlay } from './components/WaitingOverlay';
+import { GameOverOverlay } from './components/GameOverOverlay';
 import styles from './GamePage.module.css';
 
 export default function GamePage() {
@@ -118,8 +119,6 @@ export default function GamePage() {
           ? 'Your move'
           : `${opponent?.username ?? 'Opponent'} to play`;
 
-  const winnerName = gameOver ? winnerNameFor(game, gameOver) : null;
-
   return (
     <div className={styles.page}>
       <GameHeader
@@ -151,53 +150,20 @@ export default function GamePage() {
             }}
           />
 
-          {/* Waiting overlay */}
           {game.status === 'waiting' && !gameOver && (
-            <div className={styles.boardOverlay}>
-              <p className={styles.overlayEyebrow}>Awaiting opponent</p>
-              <p className={styles.overlayHeadline}>The board is set.</p>
-              <p className={styles.overlayLede}>
-                Share the spectator link, or wait for someone to take the seat.
-              </p>
-              <div className={styles.overlayActions}>
-                <button
-                  className={styles.overlayPrimary}
-                  onClick={() => setShareOpen(true)}
-                  disabled={!spectatorToken}
-                >
-                  Share link
-                </button>
-                <button className={styles.overlaySecondary} onClick={handleCancelWaiting}>
-                  Cancel game
-                </button>
-              </div>
-            </div>
+            <WaitingOverlay
+              spectatorEnabled={!!spectatorToken}
+              onShare={() => setShareOpen(true)}
+              onCancel={handleCancelWaiting}
+            />
           )}
 
-          {/* Game-over overlay */}
           {gameOver && (
-            <div className={`${styles.boardOverlay} ${styles.boardOverlayDark}`}>
-              <p className={styles.overlayEyebrow}>Match concluded</p>
-              <p className={styles.overlayHeadline}>
-                {gameOver.winner === 'draw' ? (
-                  'Drawn'
-                ) : (
-                  <>
-                    <span className={styles.overlayWinner}>{winnerName}</span>{' '}
-                    <span className={styles.overlayWins}>wins</span>
-                  </>
-                )}
-              </p>
-              <p className={styles.overlayReason}>{REASON_COPY[gameOver.reason]}</p>
-              <div className={styles.overlayActions}>
-                <button
-                  className={styles.overlayPrimary}
-                  onClick={() => navigate('/lobby')}
-                >
-                  Back to lobby
-                </button>
-              </div>
-            </div>
+            <GameOverOverlay
+              game={game}
+              payload={gameOver}
+              onBack={() => navigate('/lobby')}
+            />
           )}
         </div>
 
