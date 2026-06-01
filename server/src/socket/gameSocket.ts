@@ -11,8 +11,6 @@ import {
   MovePayload,
   MoveUpdatePayload,
   DrawOfferPayload,
-  DisconnectPayload,
-  ReconnectPayload,
 } from '../../../shared/types';
 
 type Color = 'white' | 'black';
@@ -111,25 +109,12 @@ export function registerGameHandlers(socket: Socket): void {
   const userId = socket.data.userId;
   if (!userId) return; // unauthenticated socket — gameplay events not allowed
 
-  const joinedGames = new Set<string>();
-
   socket.on(SocketEvents.GAME_JOIN, async (gameId: string) => {
     if (typeof gameId !== 'string') return;
     const loaded = await loadForUser(gameId, userId);
     if (!loaded) return;
-    const { game, color } = loaded;
 
     socket.join(`game:${gameId}`);
-    joinedGames.add(gameId);
-
-    // Clear stale disconnect marker if this user is back
-    if (game.disconnectedSince[color]) {
-      game.disconnectedSince[color] = null;
-      game.markModified('disconnectedSince');
-      await game.save();
-      const payload: ReconnectPayload = { color };
-      socket.to(`game:${gameId}`).emit(SocketEvents.GAME_RECONNECT, payload);
-    }
   });
 
   socket.on(SocketEvents.MOVE_MAKE, async (payload: MovePayload) => {
@@ -168,7 +153,6 @@ export function registerGameHandlers(socket: Socket): void {
 
     game.fen = chess.fen();
     game.pgn = chess.pgn();
-    game.lastMoveAt = new Date();
 
     // End-of-game detection (chess.js order matters: checkmate before generic isDraw).
     // Apply state changes in-memory now; emit MOVE_UPDATE first, GAME_OVER second
@@ -255,62 +239,4 @@ export function registerGameHandlers(socket: Socket): void {
     socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_DECLINED);
   });
 
-  socket.on(SocketEvents.GAME_CLAIM_WIN, async (gameId: string) => {
-    if (typeof gameId !== 'string') return;
-    const loaded = await loadForUser(gameId, userId);
-    if (!loaded || loaded.game.status !== 'active') return;
-    const { game, color } = loaded;
-    const oppC = opponent(color);
-    const oppDisconnectedAt = game.disconnectedSince[oppC];
-    if (!oppDisconnectedAt) {
-      socket.emit(SocketEvents.GAME_CLAIM_ERROR, {
-        message: 'Opponent is not disconnected',
-      });
-      return;
-    }
-    const elapsed = Date.now() - oppDisconnectedAt.getTime();
-    if (elapsed < 60_000) {
-      socket.emit(SocketEvents.GAME_CLAIM_ERROR, {
-        message: `Wait ${Math.ceil((60_000 - elapsed) / 1000)}s longer`,
-      });
-      return;
-    }
-    await finishGame(game, color, userIdForColor(game, color), 'abandonment');
-  });
-
-  // Explicit leave (e.g. user navigates from /game/:id to /lobby).
-  // Treated as a disconnect: marks `disconnectedSince[color]` and notifies opponent.
-  socket.on(SocketEvents.GAME_LEAVE, async (gameId: string) => {
-    if (typeof gameId !== 'string') return;
-    if (!joinedGames.has(gameId)) return;
-    const loaded = await loadForUser(gameId, userId);
-    socket.leave(`game:${gameId}`);
-    joinedGames.delete(gameId);
-    if (!loaded || loaded.game.status !== 'active') return;
-    const { game, color } = loaded;
-    const now = new Date();
-    game.disconnectedSince[color] = now;
-    game.markModified('disconnectedSince');
-    await game.save();
-    const payload: DisconnectPayload = { color, since: now.toISOString() };
-    socket.to(`game:${gameId}`).emit(SocketEvents.GAME_DISCONNECT, payload);
-  });
-
-  socket.on('disconnecting', async () => {
-    for (const gameId of joinedGames) {
-      try {
-        const loaded = await loadForUser(gameId, userId);
-        if (!loaded || loaded.game.status !== 'active') continue;
-        const { game, color } = loaded;
-        const now = new Date();
-        game.disconnectedSince[color] = now;
-        game.markModified('disconnectedSince');
-        await game.save();
-        const payload: DisconnectPayload = { color, since: now.toISOString() };
-        socket.to(`game:${gameId}`).emit(SocketEvents.GAME_DISCONNECT, payload);
-      } catch (err) {
-        console.error('Game disconnect handler error:', err);
-      }
-    }
-  });
 }

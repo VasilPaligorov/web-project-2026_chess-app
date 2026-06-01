@@ -4,7 +4,7 @@ import { asyncHandler } from '../middleware/asyncHandler';
 import {
   createGame,
   listWaitingGames,
-  getCurrentGame,
+  getCurrentGames,
   getSpectateGame,
   getGameById,
   joinGame,
@@ -15,7 +15,7 @@ const router = Router();
 
 router.post('/',                requireAuth, asyncHandler(createGame));
 router.get('/waiting',          requireAuth, asyncHandler(listWaitingGames));
-router.get('/me/current',       requireAuth, asyncHandler(getCurrentGame));
+router.get('/me/current',       requireAuth, asyncHandler(getCurrentGames));
 router.get('/spectate/:token',               asyncHandler(getSpectateGame));
 router.get('/:id',              requireAuth, asyncHandler(getGameById));
 router.post('/:id/join',        requireAuth, asyncHandler(joinGame));

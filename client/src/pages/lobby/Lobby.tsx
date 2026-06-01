@@ -5,51 +5,53 @@ import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import { useWaitingGames } from '../../hooks/useWaitingGames';
 import type { Game } from '../../../../shared/types';
-import { ResumeBanner } from './components/ResumeBanner';
+import { ActiveGamesList } from './components/ActiveGamesList';
 import { LobbyHero } from './components/LobbyHero';
 import { WaitingGamesList } from './components/WaitingGamesList';
 import { pickError } from './lobby.utils';
 import styles from './Lobby.module.css';
 
 interface GameResponse { success: boolean; message?: string; data?: Game }
-interface CurrentGameResponse { success: boolean; data: Game | null }
+interface CurrentGamesResponse { success: boolean; data: Game[] }
 
 export default function Lobby() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { games, error: listError, refresh } = useWaitingGames();
 
-  const [currentGame, setCurrentGame] = useState<Game | null>(null);
+  const [currentGames, setCurrentGames] = useState<Game[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const myWaitingGame = games?.find((g) => g.whitePlayer._id === user?._id) ?? null;
-  const myActiveGame = currentGame?.status === 'active' ? currentGame : null;
+  const myActiveGames = currentGames.filter((g) => g.status === 'active');
 
-  const fetchCurrentGame = useCallback(async () => {
+  const fetchCurrentGames = useCallback(async () => {
     try {
-      const { data } = await api.get<CurrentGameResponse>('/api/games/me/current');
-      if (data.success) setCurrentGame(data.data);
+      const { data } = await api.get<CurrentGamesResponse>('/api/games/me/current');
+      if (data.success) setCurrentGames(data.data);
     } catch {
       /* best-effort */
     }
   }, []);
 
   useEffect(() => {
-    fetchCurrentGame();
+    fetchCurrentGames();
     const socket = getSocket();
+    // Auto-navigate the lobby into the game when an opponent joins one of our
+    // waiting games — fires on `game:start` emitted to the user room.
     const onGameStart = (game: Game) => navigate(`/game/${game._id}`);
     socket.on('game:start', onGameStart);
-    socket.on('game:start', fetchCurrentGame);
-    socket.on('lobby:changed', fetchCurrentGame);
+    socket.on('game:start', fetchCurrentGames);
+    socket.on('lobby:changed', fetchCurrentGames);
     return () => {
       socket.off('game:start', onGameStart);
-      socket.off('game:start', fetchCurrentGame);
-      socket.off('lobby:changed', fetchCurrentGame);
+      socket.off('game:start', fetchCurrentGames);
+      socket.off('lobby:changed', fetchCurrentGames);
     };
-  }, [navigate, fetchCurrentGame]);
+  }, [navigate, fetchCurrentGames]);
 
   const handleCreate = async () => {
     setActionError(null);
@@ -95,13 +97,8 @@ export default function Lobby() {
 
   return (
     <div className={styles.page}>
-      {myActiveGame && (
-        <ResumeBanner game={myActiveGame} onResume={() => navigate(`/game/${myActiveGame._id}`)} />
-      )}
-
       <LobbyHero
         myWaitingGame={myWaitingGame}
-        inActiveGame={!!myActiveGame}
         creating={creating}
         cancellingId={cancellingId}
         onCreate={handleCreate}
@@ -116,14 +113,22 @@ export default function Lobby() {
         </div>
       )}
 
-      <WaitingGamesList
-        games={games}
-        currentUserId={user?._id}
-        joiningId={joiningId}
-        cancellingId={cancellingId}
-        onJoin={handleJoin}
-        onCancel={handleCancel}
-      />
+      <div className={styles.spread}>
+        <ActiveGamesList
+          games={myActiveGames}
+          currentUserId={user?._id}
+          onResume={(id) => navigate(`/game/${id}`)}
+        />
+        <div className={styles.gutter} aria-hidden="true" />
+        <WaitingGamesList
+          games={games}
+          currentUserId={user?._id}
+          joiningId={joiningId}
+          cancellingId={cancellingId}
+          onJoin={handleJoin}
+          onCancel={handleCancel}
+        />
+      </div>
     </div>
   );
 }

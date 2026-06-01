@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 
 export const PUBLIC_USER_FIELDS = 'username elo';
 
-export const inGameQuery = (userId: string) => ({
+export const activeOrWaitingGamesQuery = (userId: string) => ({
   status: { $in: ['waiting', 'active'] },
   $or: [{ whitePlayer: userId }, { blackPlayer: userId }],
 });

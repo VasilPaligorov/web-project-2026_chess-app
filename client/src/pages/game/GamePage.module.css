@@ -208,53 +208,6 @@
   animation: fadeIn 200ms var(--ease);
 }
 
-/* ── Disconnect banner ── */
-
-.disconnectBanner {
-  display: flex;
-  align-items: center;
-  gap: var(--s-4);
-  padding: var(--s-3) var(--s-5);
-  background: var(--paper-deep);
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--oxblood);
-}
-
-.disconnectLabel {
-  font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-
-.disconnectTimer {
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  color: var(--oxblood);
-  letter-spacing: 0.04em;
-  margin-left: auto;
-}
-
-.claimBtn {
-  margin-left: auto;
-  background: var(--oxblood);
-  color: var(--paper);
-  font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  padding: var(--s-2) var(--s-5);
-  border: 1px solid var(--oxblood);
-  cursor: pointer;
-  transition: background var(--t-fast) var(--ease);
-}
-
-.claimBtn:hover {
-  background: var(--oxblood-deep);
-  border-color: var(--oxblood-deep);
-}
-
 /* ── Board area ── */
 
 .boardArea {

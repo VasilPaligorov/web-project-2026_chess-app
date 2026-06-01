@@ -41,8 +41,6 @@ export interface Game {
   pgn: string;
   spectatorToken: string;
   drawOffer: { from: string } | null;
-  disconnectedSince: { white: string | null; black: string | null };
-  lastMoveAt: string;
   createdAt: string;
   finishedAt: string | null;
   endReason: GameOverPayload['reason'] | null;
@@ -87,25 +85,11 @@ export interface DrawOfferPayload {
   from: 'white' | 'black';
 }
 
-export interface DisconnectPayload {
-  color: 'white' | 'black';
-  since: string;
-}
-
-export interface ReconnectPayload {
-  color: 'white' | 'black';
-}
-
 export const SocketEvents = {
   GAME_JOIN:      'game:join',
-  GAME_LEAVE:     'game:leave',
   GAME_START:     'game:start',
   GAME_OVER:      'game:over',
   GAME_RESIGN:    'game:resign',
-  GAME_DISCONNECT:'game:disconnect',
-  GAME_RECONNECT: 'game:reconnect',
-  GAME_CLAIM_WIN: 'game:claim-win',
-  GAME_CLAIM_ERROR: 'game:claim-error',
   MOVE_MAKE:      'move:make',
   MOVE_UPDATE:    'move:update',
   MOVE_ERROR:     'move:error',

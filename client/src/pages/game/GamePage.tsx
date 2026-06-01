@@ -8,7 +8,6 @@ import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import {
   SocketEvents,
-  type DisconnectPayload,
   type DrawOfferPayload,
   type Game,
   type GameOverPayload,
@@ -45,8 +44,6 @@ export default function GamePage() {
   const [gameOver, setGameOver] = useState<GameOverPayload | null>(null);
   const [incomingDraw, setIncomingDraw] = useState<DrawOfferPayload | null>(null);
   const [drawPending, setDrawPending] = useState(false);
-  const [disconnect, setDisconnect] = useState<DisconnectPayload | null>(null);
-  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [confirmResign, setConfirmResign] = useState(false);
 
   // Share-modal state (P5 markup preserved)
@@ -105,8 +102,6 @@ export default function GamePage() {
       setGameOver(payload);
       setDrawPending(false);
       setIncomingDraw(null);
-      setDisconnect(null);
-      setSecondsLeft(null);
       // Refresh the cached user so the header's elo/wins/losses updates.
       api
         .get<{ success: boolean; data: { user: typeof user } }>('/api/auth/me')
@@ -127,26 +122,12 @@ export default function GamePage() {
       setDrawPending(false);
       setActionMsg('Draw declined');
     };
-    const onDisconnect = (payload: DisconnectPayload) => {
-      setDisconnect(payload);
-      setSecondsLeft(60 - Math.floor((Date.now() - new Date(payload.since).getTime()) / 1000));
-    };
-    const onReconnect = () => {
-      setDisconnect(null);
-      setSecondsLeft(null);
-    };
-    const onClaimError = (payload: { message: string }) => {
-      setActionMsg(payload?.message ?? 'Cannot claim yet');
-    };
 
     socket.on(SocketEvents.MOVE_UPDATE, onMoveUpdate);
     socket.on(SocketEvents.GAME_OVER, onGameOver);
     socket.on(SocketEvents.MOVE_ERROR, onMoveError);
     socket.on(SocketEvents.DRAW_OFFER, onDrawOffer);
     socket.on(SocketEvents.DRAW_DECLINED, onDrawDeclined);
-    socket.on(SocketEvents.GAME_DISCONNECT, onDisconnect);
-    socket.on(SocketEvents.GAME_RECONNECT, onReconnect);
-    socket.on(SocketEvents.GAME_CLAIM_ERROR, onClaimError);
 
     api
       .get<{ success: boolean; data: Game }>(`/api/games/${gameId}`)
@@ -158,15 +139,6 @@ export default function GamePage() {
           setGameOver({ winner: data.data.result, reason: data.data.endReason });
         }
         socket.emit(SocketEvents.GAME_JOIN, gameId);
-
-        // If opponent was already disconnected when we landed
-        const oppColor = data.data.whitePlayer._id === user?._id ? 'black' : 'white';
-        const oppDisc = data.data.disconnectedSince[oppColor];
-        if (oppDisc && data.data.status === 'active') {
-          const since = new Date(oppDisc);
-          setDisconnect({ color: oppColor, since: oppDisc });
-          setSecondsLeft(60 - Math.floor((Date.now() - since.getTime()) / 1000));
-        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -179,32 +151,13 @@ export default function GamePage() {
 
     return () => {
       cancelled = true;
-      // Tell the server we left the game room; opponent will see the disconnect
-      // banner and the 60-second abandonment countdown will start.
-      socket.emit(SocketEvents.GAME_LEAVE, gameId);
       socket.off(SocketEvents.MOVE_UPDATE, onMoveUpdate);
       socket.off(SocketEvents.GAME_OVER, onGameOver);
       socket.off(SocketEvents.MOVE_ERROR, onMoveError);
       socket.off(SocketEvents.DRAW_OFFER, onDrawOffer);
       socket.off(SocketEvents.DRAW_DECLINED, onDrawDeclined);
-      socket.off(SocketEvents.GAME_DISCONNECT, onDisconnect);
-      socket.off(SocketEvents.GAME_RECONNECT, onReconnect);
-      socket.off(SocketEvents.GAME_CLAIM_ERROR, onClaimError);
     };
   }, [gameId, user?._id]);
-
-  // Disconnect countdown tick
-  useEffect(() => {
-    if (!disconnect) return;
-    const since = new Date(disconnect.since).getTime();
-    const tick = () => {
-      const left = 60 - Math.floor((Date.now() - since) / 1000);
-      setSecondsLeft(left);
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [disconnect]);
 
   // Click outside to close menu
   useEffect(() => {
@@ -272,11 +225,6 @@ export default function GamePage() {
     if (!gameId) return;
     getSocket().emit(SocketEvents.DRAW_DECLINE, gameId);
     setIncomingDraw(null);
-  };
-
-  const handleClaimWin = () => {
-    if (!gameId) return;
-    getSocket().emit(SocketEvents.GAME_CLAIM_WIN, gameId);
   };
 
   const handleCancelWaiting = async () => {
@@ -407,25 +355,6 @@ export default function GamePage() {
         </span>
         {actionMsg && <span className={styles.actionMsg}>{actionMsg}</span>}
       </div>
-
-      {/* ── Disconnect notice ── */}
-      {disconnect && game.status === 'active' && (
-        <div className={styles.disconnectBanner} role="status">
-          <span className={styles.disconnectLabel}>
-            {disconnect.color === myColor ? 'You appear offline' : 'Opponent disconnected'}
-          </span>
-          {secondsLeft !== null && secondsLeft > 0 && (
-            <span className={`${styles.disconnectTimer} tnum`}>
-              {Math.max(0, secondsLeft)}s
-            </span>
-          )}
-          {secondsLeft !== null && secondsLeft <= 0 && disconnect.color !== myColor && (
-            <button className={styles.claimBtn} onClick={handleClaimWin}>
-              Claim victory
-            </button>
-          )}
-        </div>
-      )}
 
       {/* ── Board ── */}
       <div className={styles.boardArea}>

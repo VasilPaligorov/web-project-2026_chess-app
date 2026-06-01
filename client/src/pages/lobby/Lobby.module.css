@@ -9,6 +9,49 @@
   margin-inline: auto;
 }
 
+/* ── Two-page spread ──
+   The "In progress" and "Awaiting opponents" lists sit side by side like
+   facing pages of an open broadsheet, with a thin gutter rule between them
+   that reads as the fold. Below 880px the columns stack and the gutter
+   collapses. */
+
+.spread {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: var(--s-10);
+  align-items: start;
+  position: relative;
+}
+
+.gutter {
+  align-self: stretch;
+  width: 1px;
+  background: var(--rule);
+  /* A short oxblood notch at the top of the gutter marks the seam, like a
+     printer's register mark. */
+  position: relative;
+}
+
+.gutter::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -2px;
+  width: 5px;
+  height: 18px;
+  background: var(--oxblood);
+}
+
+@media (max-width: 880px) {
+  .spread {
+    grid-template-columns: 1fr;
+    gap: var(--s-12);
+  }
+  .gutter {
+    display: none;
+  }
+}
+
 .error {
   display: flex;
   align-items: baseline;

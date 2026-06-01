@@ -4,7 +4,6 @@ import styles from './LobbyHero.module.css';
 
 interface Props {
   myWaitingGame: Game | null;
-  inActiveGame: boolean;
   creating: boolean;
   cancellingId: string | null;
   onCreate: () => void;
@@ -14,7 +13,6 @@ interface Props {
 
 export function LobbyHero({
   myWaitingGame,
-  inActiveGame,
   creating,
   cancellingId,
   onCreate,
@@ -42,7 +40,7 @@ export function LobbyHero({
             onCancel={() => onCancel(myWaitingGame._id)}
           />
         ) : (
-          <CreateButton creating={creating} disabled={inActiveGame} onClick={onCreate} />
+          <CreateButton creating={creating} onClick={onCreate} />
         )}
       </div>
     </header>
@@ -51,19 +49,14 @@ export function LobbyHero({
 
 interface CreateButtonProps {
   creating: boolean;
-  disabled: boolean;
   onClick: () => void;
 }
 
-function CreateButton({ creating, disabled, onClick }: CreateButtonProps) {
-  const label = disabled
-    ? 'Currently in a match'
-    : creating
-      ? 'Setting board…'
-      : 'Begin a new game';
+function CreateButton({ creating, onClick }: CreateButtonProps) {
+  const label = creating ? 'Setting board…' : 'Begin a new game';
 
   return (
-    <button type="button" className={styles.createBtn} onClick={onClick} disabled={creating || disabled}>
+    <button type="button" className={styles.createBtn} onClick={onClick} disabled={creating}>
       {label}
     </button>
   );

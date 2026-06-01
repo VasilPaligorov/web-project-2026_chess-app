@@ -2,15 +2,10 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Game } from '../models/Game';
 import { getIO } from '../socket/io';
-import { PUBLIC_USER_FIELDS, inGameQuery, parseObjectId } from './game.helpers';
+import { PUBLIC_USER_FIELDS, activeOrWaitingGamesQuery, parseObjectId } from './game.helpers';
 
 export async function createGame(req: Request, res: Response) {
   const userId = req.user!.userId;
-
-  if (await Game.exists(inGameQuery(userId))) {
-    res.status(409).json({ success: false, message: 'You are already in a game' });
-    return;
-  }
 
   const game = await Game.create({ whitePlayer: userId });
   const populated = await game.populate('whitePlayer', PUBLIC_USER_FIELDS);
@@ -25,12 +20,13 @@ export async function listWaitingGames(_req: Request, res: Response) {
   res.json({ success: true, data: games });
 }
 
-export async function getCurrentGame(req: Request, res: Response) {
+export async function getCurrentGames(req: Request, res: Response) {
   const userId = req.user!.userId;
-  const game = await Game.findOne(inGameQuery(userId))
+  const games = await Game.find(activeOrWaitingGamesQuery(userId))
     .populate('whitePlayer', PUBLIC_USER_FIELDS)
-    .populate('blackPlayer', PUBLIC_USER_FIELDS);
-  res.json({ success: true, data: game });
+    .populate('blackPlayer', PUBLIC_USER_FIELDS)
+    .sort({ createdAt: -1 });
+  res.json({ success: true, data: games });
 }
 
 export async function getSpectateGame(req: Request, res: Response) {
@@ -73,18 +69,13 @@ export async function joinGame(req: Request, res: Response) {
     return;
   }
 
-  if (await Game.exists(inGameQuery(userId))) {
-    res.status(409).json({ success: false, message: 'You are already in a game' });
-    return;
-  }
-
   const game = await Game.findOneAndUpdate(
     {
       _id: id,
       status: 'waiting',
       whitePlayer: { $ne: new Types.ObjectId(userId) },
     },
-    { $set: { blackPlayer: userId, status: 'active', lastMoveAt: new Date() } },
+    { $set: { blackPlayer: userId, status: 'active' } },
     { new: true }
   )
     .populate('whitePlayer', PUBLIC_USER_FIELDS)
