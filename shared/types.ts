@@ -85,6 +85,18 @@ export interface DrawOfferPayload {
   from: 'white' | 'black';
 }
 
+export interface ChatSendPayload {
+  gameId: string;
+  text: string;
+}
+
+export interface ChatMessagePayload {
+  userId: string;
+  username: string;
+  text: string;
+  createdAt: string;
+}
+
 export const SocketEvents = {
   GAME_JOIN:      'game:join',
   GAME_START:     'game:start',
@@ -98,6 +110,9 @@ export const SocketEvents = {
   DRAW_DECLINE:   'draw:decline',
   DRAW_DECLINED:  'draw:declined',
   SPECTATOR_JOIN: 'spectator:join',
+  CHAT_SEND:      'chat:send',
+  CHAT_RECEIVE:   'chat:receive',
+  CHAT_HISTORY:   'chat:history',
 } as const;
 
 export type SocketEvent = typeof SocketEvents[keyof typeof SocketEvents];

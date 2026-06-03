@@ -1,0 +1,135 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  height: 100%;
+  min-height: 320px;
+}
+
+.heading {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 0;
+  padding: var(--s-3) var(--s-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.messageList {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--s-3) var(--s-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.empty {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ash-soft);
+  font-size: var(--t-body-sm);
+  margin: auto;
+  text-align: center;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 85%;
+}
+
+.messageOwn {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.messageOpponent {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.username {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.1em;
+  color: var(--ash);
+  text-transform: uppercase;
+}
+
+.usernameOwn {
+  color: var(--oxblood);
+}
+
+.text {
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  color: var(--ink);
+  background: var(--paper-deep);
+  padding: var(--s-2) var(--s-3);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.messageOwn .text {
+  background: var(--oxblood-tint);
+}
+
+.time {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ash-soft);
+}
+
+.inputRow {
+  display: flex;
+  border-top: 1px solid var(--rule);
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  color: var(--ink);
+  padding: var(--s-3) var(--s-4);
+}
+
+.input::placeholder {
+  color: var(--ash-soft);
+  font-style: italic;
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
+.sendBtn {
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  padding: var(--s-3) var(--s-4);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+
+.sendBtn:hover:not(:disabled) {
+  background: var(--oxblood);
+  color: var(--paper);
+}
+
+.sendBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

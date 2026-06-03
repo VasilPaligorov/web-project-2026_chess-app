@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { Game, IGame } from '../models/Game';
 import { updateElo } from '../services/eloService';
 import { getIO } from './io';
+import { sendChatHistory } from './chatSocket';
 import {
   SocketEvents,
   GameOverPayload,
@@ -131,6 +132,7 @@ async function onGameJoin(socket: Socket, userId: string, gameId: string): Promi
   const loaded = await loadForUser(gameId, userId);
   if (!loaded) return;
   socket.join(`game:${gameId}`);
+  await sendChatHistory(socket, gameId);
 }
 
 async function onMoveMake(
