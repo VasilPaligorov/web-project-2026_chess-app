@@ -71,13 +71,20 @@
   isolation: isolate;
 }
 
-.actionRail {
+.sidebar {
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
   align-self: stretch;
+  min-width: 200px;
+  max-width: 240px;
+}
+
+.actionRail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
   padding-top: var(--s-2);
-  min-width: 180px;
 }
 
 .actionBtn {
@@ -171,10 +178,13 @@
     grid-template-columns: 1fr;
   }
 
+  .sidebar {
+    max-width: 100%;
+  }
+
   .actionRail {
     flex-direction: row;
     flex-wrap: wrap;
-    min-width: 0;
   }
 
   .actionBtn {

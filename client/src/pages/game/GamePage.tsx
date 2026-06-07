@@ -12,12 +12,16 @@ import { GameOverOverlay } from './components/GameOverOverlay';
 import { ShareModal } from './components/ShareModal';
 import { ResignConfirmModal } from './components/ResignConfirmModal';
 import { DrawOfferToast } from './components/DrawOfferToast';
+import { ChatPanel } from './components/ChatPanel';
+import { useChat } from './useChat';
 import styles from './GamePage.module.css';
 
 export default function GamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+
+  const { messages, sendMessage } = useChat(gameId);
 
   const {
     game,
@@ -190,23 +194,34 @@ export default function GamePage() {
           )}
         </div>
 
-        {game.status === 'active' && !gameOver && myColor && (
-          <div className={styles.actionRail}>
-            <button
-              className={styles.actionBtn}
-              onClick={offerDraw}
-              disabled={drawPending}
-            >
-              {drawPending ? 'Draw offered…' : 'Offer draw'}
-            </button>
-            <button
-              className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-              onClick={() => setConfirmResign(true)}
-            >
-              Resign
-            </button>
-          </div>
-        )}
+        <div className={styles.sidebar}>
+          {game.status === 'active' && !gameOver && myColor && (
+            <div className={styles.actionRail}>
+              <button
+                className={styles.actionBtn}
+                onClick={offerDraw}
+                disabled={drawPending}
+              >
+                {drawPending ? 'Draw offered…' : 'Offer draw'}
+              </button>
+              <button
+                className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                onClick={() => setConfirmResign(true)}
+              >
+                Resign
+              </button>
+            </div>
+          )}
+
+          {game.status !== 'waiting' && (
+            <ChatPanel
+              messages={messages}
+              currentUserId={user._id}
+              disabled={game.status !== 'active' || !!gameOver}
+              onSend={sendMessage}
+            />
+          )}
+        </div>
       </div>
 
       {shareOpen && (

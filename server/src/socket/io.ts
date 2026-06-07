@@ -3,6 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { verifyToken } from '../utils/jwt';
 import { registerSpectatorHandlers } from './spectatorSocket';
 import { registerGameHandlers } from './gameSocket';
+import { registerChatHandlers } from './chatSocket';
 
 declare module 'socket.io' {
   interface SocketData {
@@ -36,6 +37,7 @@ export const initIO = (httpServer: HttpServer): Server => {
     if (socket.data.userId) {
       socket.join(`user:${socket.data.userId}`);
       registerGameHandlers(socket);
+      registerChatHandlers(socket);
     }
     registerSpectatorHandlers(socket);
   });
