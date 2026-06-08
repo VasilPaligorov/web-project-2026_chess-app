@@ -106,6 +106,40 @@
   font-style: italic;
 }
 
+.passwordWrap {
+  position: relative;
+  display: flex;
+}
+
+.passwordWrap .input {
+  flex: 1;
+  padding-right: var(--s-8);
+}
+
+.eye {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  padding: var(--s-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ash);
+  transition: color var(--t-fast) var(--ease);
+}
+
+.eye:hover {
+  color: var(--oxblood);
+}
+
+.eye:focus-visible {
+  outline: none;
+  color: var(--oxblood);
+}
+
 .error {
   border-left: 2px solid var(--oxblood);
   padding: var(--s-2) var(--s-3);
