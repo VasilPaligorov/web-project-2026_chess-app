@@ -10,6 +10,11 @@ export interface User {
   createdAt: string;
 }
 
+export interface AuthResponse {
+  success: boolean;
+  data: { user: User; token: string };
+}
+
 export interface PublicUser {
   _id: string;
   username: string;

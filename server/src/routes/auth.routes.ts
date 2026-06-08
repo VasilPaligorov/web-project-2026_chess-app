@@ -1,119 +1,13 @@
-import { Router, Request, Response } from 'express';
-import { User } from '../models/User';
-import { hashPassword, comparePassword } from '../utils/password';
-import { signToken } from '../utils/jwt';
+import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
-import { blacklistToken } from '../utils/tokenBlacklist';
+import { asyncHandler } from '../middleware/asyncHandler';
+import { register, login, logout, getCurrentUser } from '../controllers/auth.controller';
 
 const router = Router();
 
-const toPublicUser = (user: InstanceType<typeof User>) => ({
-  _id:       user._id.toString(),
-  username:  user.username,
-  email:     user.email,
-  elo:       user.elo,
-  peakElo:   user.peakElo,
-  wins:      user.wins,
-  losses:    user.losses,
-  draws:     user.draws,
-  createdAt: user.createdAt.toISOString(),
-});
-
-// POST /api/auth/register
-router.post('/register', async (req: Request, res: Response) => {
-  try {
-    const { username, email, password } = req.body;
-
-    if (!username || !email || !password) {
-      res.status(400).json({ success: false, message: 'username, email and password are required' });
-      return;
-    }
-
-    if (password.length < 6) {
-      res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
-      return;
-    }
-
-    const normalizedEmail = email.toLowerCase();
-    const existing = await User.findOne({ $or: [{ email: normalizedEmail }, { username }] });
-    if (existing) {
-      const field = existing.email === normalizedEmail ? 'email' : 'username';
-      res.status(409).json({ success: false, message: `That ${field} is already taken` });
-      return;
-    }
-
-    const passwordHash = await hashPassword(password);
-    const user = await User.create({ username, email: normalizedEmail, passwordHash });
-    const token = signToken({ userId: String(user._id) });
-
-    res.status(201).json({ success: true, data: { user: toPublicUser(user), token } });
-  } catch (err: unknown) {
-    // Duplicate key error from a race between concurrent registrations
-    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: number }).code === 11000) {
-      res.status(409).json({ success: false, message: 'That email or username is already taken' });
-      return;
-    }
-    console.error('Register error:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
-// POST /api/auth/login
-router.post('/login', async (req: Request, res: Response) => {
-  try {
-    const { identifier, password } = req.body;
-
-    if (!identifier || !password) {
-      res.status(400).json({ success: false, message: 'identifier and password are required' });
-      return;
-    }
-
-    const user = await User.findOne({
-      $or: [
-        { email: identifier.toLowerCase() },
-        { username: identifier },
-      ],
-    }).select('+passwordHash');
-
-    if (!user || !(await comparePassword(password, user.passwordHash))) {
-      res.status(401).json({ success: false, message: 'Invalid credentials' });
-      return;
-    }
-
-    const token = signToken({ userId: String(user._id) });
-    res.json({ success: true, data: { user: toPublicUser(user), token } });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
-// POST /api/auth/logout
-router.post('/logout', requireAuth, async (req: Request, res: Response) => {
-  try {
-    const token = req.headers.authorization!.match(/^Bearer\s+(\S+)$/i)![1];
-    const expiresAt = new Date(req.user!.exp * 1000);
-    await blacklistToken(token, expiresAt);
-    res.json({ success: true, message: 'Logged out' });
-  } catch (err) {
-    console.error('Logout error:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
-
-// GET /api/auth/me — current user (used by client to refresh after elo changes etc.)
-router.get('/me', requireAuth, async (req: Request, res: Response) => {
-  try {
-    const user = await User.findById(req.user!.userId);
-    if (!user) {
-      res.status(404).json({ success: false, message: 'User not found' });
-      return;
-    }
-    res.json({ success: true, data: { user: toPublicUser(user) } });
-  } catch (err) {
-    console.error('Get current user error:', err);
-    res.status(500).json({ success: false, message: 'Internal server error' });
-  }
-});
+router.post('/register',              asyncHandler(register));
+router.post('/login',                 asyncHandler(login));
+router.post('/logout',  requireAuth,  asyncHandler(logout));
+router.get('/me',       requireAuth,  asyncHandler(getCurrentUser));
 
 export default router;

@@ -26,3 +26,10 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+/** Extracts a server-provided error message from an axios error, falling back to a default. */
+export function getErrorMessage(err: unknown, fallback: string): string {
+  return axios.isAxiosError(err) && err.response?.data?.message
+    ? err.response.data.message
+    : fallback;
+}
