@@ -17,7 +17,10 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     const url: string = err.config?.url ?? '';
-    const isAuthAttempt = url.includes('/api/auth/login') || url.includes('/api/auth/register');
+    const isAuthAttempt =
+      url.includes('/api/auth/login') ||
+      url.includes('/api/auth/register') ||
+      url.includes('/api/auth/google');
     if (err.response?.status === 401 && !isAuthAttempt) {
       useAuthStore.getState().logout();
     }

@@ -2,7 +2,11 @@ import { Request, Response } from 'express';
 import { User } from '../models/User';
 import { hashPassword, comparePassword } from '../utils/password';
 import { signToken } from '../utils/jwt';
+import { verifyGoogleAccessToken } from '../utils/google';
 import { blacklistToken } from '../utils/tokenBlacklist';
+
+const isDuplicateKeyError = (err: unknown): boolean =>
+  typeof err === 'object' && err !== null && 'code' in err && (err as { code: number }).code === 11000;
 
 const toPublicUser = (user: InstanceType<typeof User>) => ({
   _id:       user._id.toString(),
@@ -45,7 +49,7 @@ export async function register(req: Request, res: Response) {
     res.status(201).json({ success: true, data: { user: toPublicUser(user), token } });
   } catch (err: unknown) {
     // Duplicate key error from a race between concurrent registrations
-    if (typeof err === 'object' && err !== null && 'code' in err && (err as { code: number }).code === 11000) {
+    if (isDuplicateKeyError(err)) {
       res.status(409).json({ success: false, message: 'That email or username is already taken' });
       return;
     }
@@ -68,9 +72,59 @@ export async function login(req: Request, res: Response) {
     ],
   }).select('+passwordHash');
 
-  if (!user || !(await comparePassword(password, user.passwordHash))) {
+  if (!user || !user.passwordHash || !(await comparePassword(password, user.passwordHash))) {
     res.status(401).json({ success: false, message: 'Invalid credentials' });
     return;
+  }
+
+  const token = signToken({ userId: String(user._id) });
+  res.json({ success: true, data: { user: toPublicUser(user), token } });
+}
+
+export async function googleLogin(req: Request, res: Response) {
+  const { accessToken } = req.body;
+
+  if (!accessToken) {
+    res.status(400).json({ success: false, message: 'accessToken is required' });
+    return;
+  }
+
+  let profile;
+  try {
+    profile = await verifyGoogleAccessToken(accessToken);
+  } catch {
+    res.status(401).json({ success: false, message: 'Invalid Google credential' });
+    return;
+  }
+
+  if (!profile.emailVerified) {
+    res.status(401).json({ success: false, message: 'Your Google email is not verified' });
+    return;
+  }
+
+  // Account linking: reuse the existing account when the email already exists.
+  let user = await User.findOne({ email: profile.email });
+
+  if (!user) {
+    try {
+      user = await User.create({
+        username: profile.email,
+        email: profile.email,
+        googleId: profile.googleId,
+      });
+    } catch (err: unknown) {
+      // Lost a race with a concurrent first-time Google login for the same email.
+      if (isDuplicateKeyError(err)) {
+        user = await User.findOne({ email: profile.email });
+      }
+      if (!user) throw err;
+    }
+  }
+
+  // Link Google to a pre-existing email/password account on first Google sign-in.
+  if (!user.googleId) {
+    user.googleId = profile.googleId;
+    await user.save();
   }
 
   const token = signToken({ userId: String(user._id) });

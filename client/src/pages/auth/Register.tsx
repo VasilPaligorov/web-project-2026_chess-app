@@ -4,6 +4,7 @@ import api, { getErrorMessage } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import type { AuthResponse } from '../../../../shared/types';
 import PasswordInput from './PasswordInput';
+import GoogleAuthButton from '../../components/GoogleAuthButton';
 import styles from './Auth.module.css';
 
 type RedirectState = { from?: { pathname?: string } } | null;
@@ -98,6 +99,12 @@ export default function Register() {
             {loading ? 'Creating account…' : 'Sign up'}
           </button>
         </form>
+
+        <div className={styles.divider}><span>or</span></div>
+
+        <div className={styles.googleWrap}>
+          <GoogleAuthButton label="Sign up with Google" redirectTo={from} onError={setError} />
+        </div>
 
         <div className={styles.footer}>
           Already have an account? <Link to="/login">Log in</Link>

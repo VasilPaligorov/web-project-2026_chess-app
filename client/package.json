@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-oauth/google": "^0.13.5",
     "axios": "^1.7.9",
     "chess.js": "^1.4.0",
     "react": "^19.0.0",
