@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from 'react';
 import type { Game } from '../../../../../shared/types';
 import styles from './GameHeader.module.css';
 
@@ -9,24 +8,6 @@ interface Props {
 }
 
 export function GameHeader({ game, spectatorEnabled, onShareClick }: Props) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, []);
-
-  const handleShareClick = () => {
-    onShareClick();
-    setMenuOpen(false);
-  };
-
   return (
     <header className={styles.header}>
       <div className={styles.headerMeta}>
@@ -49,30 +30,14 @@ export function GameHeader({ game, spectatorEnabled, onShareClick }: Props) {
       </div>
 
       <div className={styles.toolbar}>
-        <div className={styles.menu} ref={menuRef}>
-          <button
-            type="button"
-            className={styles['menu-trigger']}
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-label="Game options"
-            disabled={!spectatorEnabled}
-          >
-            <span className={styles.dot} />
-            <span className={styles.dot} />
-            <span className={styles.dot} />
-          </button>
-          {menuOpen && (
-            <div className={styles['menu-dropdown']}>
-              <button
-                type="button"
-                className={styles['menu-item']}
-                onClick={handleShareClick}
-              >
-                Share spectator link
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          className={styles.shareBtn}
+          onClick={onShareClick}
+          disabled={!spectatorEnabled}
+        >
+          Share link
+        </button>
       </div>
     </header>
   );
