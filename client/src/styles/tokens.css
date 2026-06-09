@@ -1,42 +1,42 @@
 :root {
-  /* color */
-  --ink: #0f0d08;
-  --ink-soft: #2a2620;
-  --paper: #f6efe2;
-  --paper-deep: #ebe2d0;
-  --paper-edge: #ddd2bb;
-  --oxblood: #7a1418;
-  --oxblood-deep: #5e0e12;
-  --oxblood-tint: rgba(122, 20, 24, 0.05);
-  --ash: #6b6760;
-  --ash-soft: #9a948a;
-  --rule: rgba(15, 13, 8, 0.16);
-  --rule-soft: rgba(15, 13, 8, 0.08);
-  --shadow-sm: 0 1px 0 rgba(15, 13, 8, 0.06);
-  --shadow-md: 0 12px 32px -16px rgba(15, 13, 8, 0.18);
-  --shadow-lg: 0 24px 56px -28px rgba(15, 13, 8, 0.28);
+  --ink: #09090b;             
+  --ink-soft: #27272a;        
+  
+  --paper: #ffffff;           
+  --paper-deep: #f8fafc;      
+  --paper-edge: #f1f5f9;     
+  
+  --oxblood: #09090b;         
+  --oxblood-deep: #000000;
+  --oxblood-tint: #f4f4f5;    
+  
+  --ash: #71717a;             
+  --ash-soft: #a1a1aa;        
+  
+  --rule: rgba(0, 0, 0, 0.08);     
+  --rule-soft: rgba(0, 0, 0, 0.04);
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.06);
 
-  /* canvas aliases — kept for semantic CSS that references them */
   --canvas:        var(--paper);
   --canvas-raised: var(--paper-deep);
   --canvas-deep:   var(--ink);
 
-  /* type families */
-  --font-display: 'DM Serif Display', 'Times New Roman', Georgia, serif;
-  --font-body:    'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* type scale */
-  --t-display-xl: clamp(3rem, 8vw, 5.5rem);
-  --t-display-lg: clamp(2.25rem, 5vw, 3.5rem);
-  --t-display-md: clamp(1.5rem, 3vw, 2.25rem);
+  --t-display-xl: clamp(2.5rem, 6vw, 4.5rem); 
+  --t-display-lg: clamp(2rem, 4vw, 3rem);
+  --t-display-md: clamp(1.35rem, 2.5vw, 1.85rem);
   --t-body-lg: 1.125rem;
   --t-body: 1rem;
-  --t-body-sm: 0.9375rem;
+  --t-body-sm: 0.875rem;                     
   --t-eyebrow: 0.75rem;
-  --t-mono: 0.875rem;
+  --t-mono: 0.8125rem;
 
-  /* spacing — 4pt grid */
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
@@ -50,9 +50,8 @@
   --s-20: 80px;
   --s-24: 96px;
 
-  /* motion */
-  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
-  --t-fast: 140ms;
-  --t-med: 280ms;
-  --t-slow: 520ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1); 
+  --t-fast: 120ms;
+  --t-med: 240ms;
+  --t-slow: 480ms;
 }

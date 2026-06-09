@@ -15,6 +15,7 @@
   box-shadow: var(--shadow-lg);
   width: min(480px, calc(100vw - var(--s-8)));
   padding: var(--s-6);
+  border-radius: 12px;
   animation: rise 350ms var(--ease) backwards;
 }
 
@@ -73,6 +74,7 @@
   padding: var(--s-2) var(--s-5);
   border: 1px solid var(--rule);
   cursor: pointer;
+  border-radius: 9999px;
   transition: border-color var(--t-fast) var(--ease);
 }
 
@@ -90,6 +92,7 @@
   padding: var(--s-2) var(--s-5);
   border: 1px solid var(--oxblood);
   cursor: pointer;
+  border-radius: 9999px;
   transition: background var(--t-fast) var(--ease);
 }
 

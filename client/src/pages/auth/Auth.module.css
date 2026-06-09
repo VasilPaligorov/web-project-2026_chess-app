@@ -16,6 +16,7 @@
   max-width: 26rem;
   background: var(--paper-deep);
   border: 1px solid var(--rule);
+  border-radius: 12px;
   padding: var(--s-12) var(--s-10);
   position: relative;
   box-shadow: var(--shadow-md);
@@ -68,6 +69,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
+  border-radius: 8px;
 }
 
 .label {
@@ -79,6 +81,7 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ash);
+  border-radius: 4px;
 }
 
 .input {
@@ -92,7 +95,7 @@
   letter-spacing: 0.005em;
   text-transform: none;
   color: var(--ink);
-  border-radius: 0;
+  border-radius: 4px;
   transition: border-color var(--t-fast) var(--ease);
 }
 
@@ -163,7 +166,7 @@
   text-transform: uppercase;
   cursor: pointer;
   margin-top: var(--s-4);
-  border-radius: 0;
+  border-radius: 10px;
   transition:
     background var(--t-med) var(--ease),
     border-color var(--t-med) var(--ease),

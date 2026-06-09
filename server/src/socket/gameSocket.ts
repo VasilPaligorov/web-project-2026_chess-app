@@ -219,11 +219,22 @@ async function onDrawOffer(socket: Socket, userId: string, gameId: string): Prom
   const loaded = await loadActiveGameForUser(gameId, userId);
   if (!loaded) return;
   const { game, color } = loaded;
-  if (game.drawOffer) return;
-  game.drawOffer = { from: new mongoose.Types.ObjectId(userId) };
-  await game.save();
-  const payload: DrawOfferPayload = { from: color };
-  socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_OFFER, payload);
+
+if (game.drawOffer && game.drawOffer.from) {
+  if (game.drawOffer.from.toString() === userId) {
+  
+    const payload: DrawOfferPayload = { from: color };
+    socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_OFFER, payload);
+    return; 
+  } 
+  return;
+}
+
+game.drawOffer = { from: new mongoose.Types.ObjectId(userId) };
+await game.save();
+
+const payload: DrawOfferPayload = { from: color };
+socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_OFFER, payload);
 }
 
 async function onDrawAccept(socket: Socket, userId: string, gameId: string): Promise<void> {

@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import styles from './DrawOfferToast.module.css';
 
 interface Props {
@@ -7,7 +8,7 @@ interface Props {
 }
 
 export function DrawOfferToast({ opponentName, onAccept, onDecline }: Props) {
-  return (
+  return createPortal(
     <div className={styles.toast} role="dialog">
       <p className={styles.eyebrow}>Draw offered</p>
       <p className={styles.body}>{opponentName} offers a draw.</p>
@@ -19,6 +20,7 @@ export function DrawOfferToast({ opponentName, onAccept, onDecline }: Props) {
           Accept
         </button>
       </div>
-    </div>
+    </div>,
+    document.body 
   );
 }

@@ -1,85 +1,89 @@
 .toast {
   position: fixed;
-  bottom: var(--s-8);
-  right: var(--s-8);
-  z-index: 50;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-left: 3px solid var(--oxblood);
-  box-shadow: var(--shadow-md);
-  padding: var(--s-4) var(--s-5);
-  width: min(320px, calc(100vw - var(--s-12)));
-  animation: rise 320ms var(--ease) backwards;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999999; 
+  background: var(--paper, #ffffff);
+  border: 1px solid var(--rule, #e5e5e5);
+  border-left: 4px solid var(--ink, #000000); 
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: var(--s-6, 24px) var(--s-8, 32px);
+  width: min(550px, calc(100vw - 32px));
+  box-sizing: border-box;
+  animation: rise 400ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
+  font-family: var(--font-mono), monospace;
+  font-size: var(--t-eyebrow, 0.75rem);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ash);
+  color: var(--ash, #737373);
   margin: 0;
 }
 
 .body {
-  font-family: var(--font-body);
-  font-size: var(--t-body-sm);
-  color: var(--ink);
-  margin: var(--s-2) 0 var(--s-3);
+  font-family: var(--font-body), sans-serif;
+  font-size: var(--t-body-sm, 0.875rem);
+  color: var(--ink-soft, #404040);
+  margin: 12px 0 24px;
+  line-height: 1.5;
 }
 
 .actions {
   display: flex;
-  gap: var(--s-3);
+  gap: 12px;
   justify-content: flex-end;
-  margin-top: var(--s-4);
 }
 
 .ghost {
   background: transparent;
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
+  color: var(--ink-soft, #404040);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--t-eyebrow, 0.75rem);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: var(--s-2) var(--s-5);
-  border: 1px solid var(--rule);
+  padding: 8px 18px;
+  border: 1px solid var(--rule, #e5e5e5);
+  border-radius: 6px;
   cursor: pointer;
-  transition: border-color var(--t-fast) var(--ease);
+  transition: all 150ms ease;
 }
 
 .ghost:hover {
-  border-color: var(--ink);
+  border-color: var(--ink, #000000);
+  background: var(--paper-deep, #f5f5f5);
+  color: var(--ink, #000000);
 }
 
 .primary {
-  background: var(--ink);
-  color: var(--paper);
-  font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
+  background: var(--ink, #000000);
+  color: var(--paper, #ffffff);
+  font-family: var(--font-mono), monospace;
+  font-size: var(--t-eyebrow, 0.75rem);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  padding: var(--s-2) var(--s-5);
-  border: 1px solid var(--ink);
+  padding: 8px 18px;
+  border: 1px solid var(--ink, #000000);
+  border-radius: 6px;
   cursor: pointer;
-  transition: background var(--t-fast) var(--ease);
+  transition: all 150ms ease;
 }
 
 .primary:hover {
-  background: var(--oxblood);
-  border-color: var(--oxblood);
+  background: var(--ink-soft, #404040);
+  border-color: var(--ink-soft, #404040);
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 880px) {
-  .toast {
-    bottom: var(--s-4);
-    right: var(--s-4);
-    left: var(--s-4);
-    width: auto;
+  from { 
+    opacity: 0; 
+    transform: translate(-50%, calc(-50% + 20px)); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translate(-50%, -50%); 
   }
 }

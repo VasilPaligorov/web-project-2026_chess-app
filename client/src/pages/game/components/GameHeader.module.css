@@ -8,16 +8,6 @@
   position: relative;
 }
 
-.header::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -3px;
-  height: 1px;
-  background: var(--rule-soft);
-}
-
 .headerMeta {
   min-width: 0;
 }
@@ -25,26 +15,27 @@
 .eyebrow {
   font-family: var(--font-mono);
   font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--ash);
-  margin: 0 0 var(--s-3);
+  margin: 0 0 var(--s-2);
 }
 
 .folioNum {
-  color: var(--oxblood);
+  font-family: var(--font-mono);
+  color: var(--ash-soft);
   margin-left: var(--s-2);
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.04;
-  letter-spacing: -0.02em;
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
   color: var(--ink);
   margin: 0;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-3);
   flex-wrap: wrap;
 }
@@ -53,21 +44,25 @@
   display: inline-flex;
   align-items: baseline;
   gap: var(--s-2);
+  font-weight: 600;
 }
 
 .playerElo {
   font-family: var(--font-mono);
   font-size: var(--t-mono);
   font-weight: 400;
-  color: var(--ash);
-  letter-spacing: 0.02em;
+  color: var(--ash-soft);
+  letter-spacing: -0.01em;
 }
 
 .vs {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 1.125rem;
-  color: var(--oxblood);
+  font-family: var(--font-mono);
+  font-style: normal;
+  font-size: 0.75rem;
+  color: var(--ash-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 var(--s-1);
 }
 
 .toolbar {
@@ -77,32 +72,44 @@
 }
 
 .shareBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--ink);
-  background: transparent;
-  border: 1px solid var(--rule);
-  padding: var(--s-2) var(--s-4);
+  color: #333;
+  background: linear-gradient(180deg, #f0f0f0 0%, #d1d1d1 100%);
+  border: 1px solid #aaa;
+  padding: 8px 16px;
+  border-radius: 9999px;
   cursor: pointer;
+  box-shadow: 0 2px 0 #999, 0 4px 6px rgba(0, 0, 0, 0.2);
+  transition: all 150ms ease;
   white-space: nowrap;
-  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
 
 .shareBtn:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--paper);
+  background: linear-gradient(180deg, #ffffff 0%, #e0e0e0 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 #999, 0 5px 8px rgba(0, 0, 0, 0.2);
+}
+
+.shareBtn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .shareBtn:disabled {
-  opacity: 0.35;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 @media (max-width: 880px) {
   .header {
     grid-template-columns: 1fr;
+    gap: var(--s-4);
   }
 
   .toolbar {

@@ -67,6 +67,7 @@
   padding: var(--s-3) var(--s-6);
   border: 1px solid var(--ink);
   cursor: pointer;
+  border-radius: 9999px;
   transition:
     background var(--t-fast) var(--ease),
     border-color var(--t-fast) var(--ease);
@@ -86,3 +87,4 @@
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+

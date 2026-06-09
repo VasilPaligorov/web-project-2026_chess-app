@@ -1,60 +1,46 @@
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  padding: var(--s-5) clamp(var(--s-6), 5vw, var(--s-16));
+  padding: var(--s-4) clamp(var(--s-6), 5vw, var(--s-16));
   background: var(--paper);
   border-bottom: 1px solid var(--rule);
-  font-family: var(--font-body);
-  color: var(--ink);
   position: relative;
-}
-
-.header::after {
-  content: '';
-  position: absolute;
-  left: clamp(var(--s-6), 5vw, var(--s-16));
-  right: clamp(var(--s-6), 5vw, var(--s-16));
-  bottom: -3px;
-  height: 1px;
-  background: var(--rule-soft);
+  z-index: 100;
 }
 
 .brand {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--s-3);
   font-family: var(--font-display);
-  font-size: 1.375rem;
-  letter-spacing: 0.01em;
+  font-size: 1.5rem;
   color: var(--ink);
   text-decoration: none;
 }
 
 .brandIcon {
-  font-family: var(--font-display);
-  font-size: 2rem;
+  font-size: 1.8rem;
   color: var(--oxblood);
   line-height: 1;
-  transform: translateY(2px);
 }
 
 .actions {
   display: flex;
-  align-items: baseline;
-  gap: var(--s-6);
+  align-items: center;
+  gap: var(--s-8);
 }
 
 .link {
   font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
+  font-size: 0.75rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ink);
   text-decoration: none;
-  padding: 4px 0;
-  border-bottom: 1px solid transparent;
-  transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  padding: var(--s-2) 0;
+  border-bottom: 2px solid transparent;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .link:hover {
@@ -66,28 +52,26 @@
   background: var(--ink);
   color: var(--paper);
   font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   text-decoration: none;
-  padding: var(--s-3) var(--s-5);
-  border: 1px solid var(--ink);
-  border-radius: 0;
+  padding: var(--s-3) var(--s-6);
+  border-radius: 9999px;
   cursor: pointer;
-  transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cta:hover {
   background: var(--oxblood);
-  border-color: var(--oxblood);
-  color: var(--paper);
+  transform: translateY(-1px);
 }
 
 .user {
   display: flex;
-  align-items: baseline;
-  gap: var(--s-3);
+  align-items: center;
+  gap: var(--s-4);
 }
 
 .userName {
@@ -98,48 +82,36 @@
 
 .elo {
   font-family: var(--font-mono);
-  font-size: var(--t-mono);
+  font-size: 0.75rem;
   color: var(--ash);
-  letter-spacing: 0.02em;
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px var(--s-2);
+  border-radius: 4px;
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
 }
 
 .logout {
   background: transparent;
-  color: var(--ink);
+  color: var(--ash);
   font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
+  font-size: 0.75rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  padding: 4px 0;
   border: none;
-  border-bottom: 1px solid var(--ink);
-  border-radius: 0;
   cursor: pointer;
-  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+  transition: color 250ms ease;
 }
 
 .logout:hover:not(:disabled) {
   color: var(--oxblood);
-  border-bottom-color: var(--oxblood);
-}
-
-.logout:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 @media (max-width: 640px) {
   .header {
-    flex-wrap: wrap;
-    gap: var(--s-3);
+    flex-direction: column;
+    gap: var(--s-4);
   }
   .actions {
     gap: var(--s-4);
-    flex-wrap: wrap;
   }
 }

@@ -1,9 +1,9 @@
 .page {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
   background: var(--paper);
   color: var(--ink);
+  display: flex;
+  flex-direction: column;
 }
 
 .hero {
@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--s-20) var(--s-6);
+  padding: var(--s-16) var(--s-6);
   position: relative;
   overflow: hidden;
 }
@@ -20,31 +20,30 @@
   content: '♞';
   position: absolute;
   font-family: var(--font-display);
-  font-size: clamp(20rem, 38vw, 36rem);
+  font-size: clamp(25rem, 45vw, 40rem);
   line-height: 1;
   color: var(--ink);
-  opacity: 0.04;
+  opacity: 0.05;
   pointer-events: none;
-  user-select: none;
-  bottom: -8vw;
-  right: -3vw;
+  bottom: -10vw;
+  right: -5vw;
   z-index: 0;
 }
 
 .heroInner {
   text-align: center;
-  max-width: 44rem;
+  max-width: 48rem;
   position: relative;
   z-index: 1;
-  animation: rise 700ms var(--ease) backwards;
+  animation: rise 800ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: clamp(3rem, 7vw, 5.25rem);
-  font-weight: 400;
-  line-height: 0.98;
-  letter-spacing: -0.022em;
+  font-size: clamp(3.5rem, 8vw, 6rem);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
   margin: 0 0 var(--s-6);
   color: var(--ink);
 }
@@ -56,70 +55,65 @@
 
 .tagline {
   font-family: var(--font-body);
-  font-size: var(--t-body-lg);
-  line-height: 1.55;
+  font-size: 1.25rem;
+  line-height: 1.6;
   color: var(--ink-soft);
-  margin: 0 auto var(--s-10);
-  max-width: 34rem;
-  font-feature-settings: "kern", "liga";
+  margin: 0 auto var(--s-12);
+  max-width: 36rem;
+  letter-spacing: -0.01em;
 }
 
 .ctaRow {
   display: flex;
   justify-content: center;
-  gap: var(--s-3);
+  gap: var(--s-4);
   flex-wrap: wrap;
+}
+
+.primary,
+.secondary {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: var(--s-5) var(--s-10);
+  border-radius: 9999px;
+  transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
 }
 
 .primary {
   background: var(--ink);
   color: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  text-decoration: none;
-  padding: var(--s-5) var(--s-8);
   border: 1px solid var(--ink);
-  border-radius: 0;
-  transition:
-    background var(--t-med) var(--ease),
-    border-color var(--t-med) var(--ease);
 }
 
 .primary:hover {
   background: var(--oxblood);
   border-color: var(--oxblood);
-  color: var(--paper);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .secondary {
   background: transparent;
   color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  text-decoration: none;
-  padding: var(--s-5) var(--s-8);
   border: 1px solid var(--rule);
-  border-radius: 0;
-  transition:
-    border-color var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease);
 }
 
 .secondary:hover {
-  border-color: var(--oxblood);
-  color: var(--oxblood);
+  background: rgba(0, 0, 0, 0.03);
+  border-color: var(--ink);
+  transform: translateY(-2px);
 }
 
 .health {
-  margin-top: var(--s-12);
+  margin-top: var(--s-16);
   font-family: var(--font-body);
-  font-size: var(--t-body-sm);
+  font-size: 0.875rem;
   color: var(--ash);
   font-style: italic;
 }
@@ -130,13 +124,11 @@
   border: 0;
   cursor: pointer;
   text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
+  text-underline-offset: 4px;
   font-family: var(--font-body);
-  font-size: var(--t-body-sm);
   font-style: italic;
   padding: 0;
-  transition: color var(--t-fast) var(--ease);
+  transition: color 200ms ease;
 }
 
 .healthButton:hover {
@@ -144,11 +136,12 @@
 }
 
 .healthResult {
-  margin-top: var(--s-2);
+  margin-top: var(--s-3);
   color: var(--ink-soft);
+  font-weight: 500;
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }

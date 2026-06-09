@@ -9,9 +9,31 @@
     "install:all": "npm install && npm install --prefix client && npm install --prefix server"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/react": "^19.2.17",
+    "@types/three": "^0.184.1",
+    "concurrently": "^9.1.2",
+    "vite": "^8.0.16"
   },
   "dependencies": {
-    "mongodb": "^7.1.1"
+    "@react-spring/three": "^10.1.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@vitejs/plugin-react": "^6.0.2",
+    "axios": "^1.17.0",
+    "chess.js": "^1.4.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.1.1",
+    "mongoose": "^9.6.3",
+    "react": "^19.2.7",
+    "react-chessboard": "^5.10.0",
+    "react-router-dom": "^7.17.0",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "zustand": "^5.0.14"
   }
 }
