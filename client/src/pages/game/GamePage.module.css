@@ -57,18 +57,24 @@
 }
 
 .boardArea {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--s-8);
-  align-items: start;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 20px;
 }
 
 .board-wrapper {
   position: relative;
-  max-width: 560px;
-  width: 100%;
-  margin-inline: auto;
-  isolation: isolate;
+  width: 800px;
+  height: 700px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: radial-gradient(
+    circle at center, 
+    #6f6e6e 0%, 
+    #403f3f 50%, 
+    #2c2b2b 80%
+  );
 }
 
 .sidebar {

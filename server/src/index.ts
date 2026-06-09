@@ -9,6 +9,8 @@ import gameRoutes from './routes/game.routes';
 import userRoutes from './routes/user.routes';
 import { errorHandler } from './middleware/errorHandler';
 
+console.log('Starting server with environment variables:'); 
+
 const app = express();
 const httpServer = createServer(app);
 initIO(httpServer);

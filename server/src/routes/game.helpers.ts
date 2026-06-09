@@ -3,7 +3,7 @@ import { Types } from 'mongoose';
 export const PUBLIC_USER_FIELDS = 'username elo';
 
 export const activeOrWaitingGamesQuery = (userId: string) => ({
-  status: { $in: ['waiting', 'active'] },
+  status: { $in: ['waiting', 'active'] as const},
   $or: [{ whitePlayer: userId }, { blackPlayer: userId }],
 });
 

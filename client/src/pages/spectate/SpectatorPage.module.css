@@ -1,7 +1,7 @@
 .page {
   min-height: 100vh;
   background: var(--paper);
-  padding: var(--s-12) var(--s-6);
+  padding: var(--s-16) var(--s-6);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -15,15 +15,15 @@
 .eyebrow {
   font-family: var(--font-mono);
   font-size: var(--t-eyebrow);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--ash);
-  margin: 0 0 var(--s-2);
+  margin: 0 0 var(--s-4);
 }
 
 .title {
   font-family: var(--font-display);
-  font-size: var(--t-display-md);
+  font-size: clamp(2rem, 5vw, 3rem);
   color: var(--ink);
   margin: 0;
   display: flex;
@@ -36,7 +36,7 @@
   font-size: var(--t-eyebrow);
   color: var(--ash);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.22em;
 }
 
 .boardWrapper {
@@ -44,23 +44,28 @@
   width: 100%;
   max-width: 520px;
   isolation: isolate;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
 }
 
 .resultOverlay {
   position: absolute;
   inset: 0;
-  background: rgba(246, 239, 226, 0.92);
+  background: rgba(var(--paper-rgb), 0.92);
+  backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 10;
-  gap: var(--s-2);
+  gap: var(--s-3);
+  animation: fadeIn 300ms var(--ease);
 }
 
 .resultText {
   font-family: var(--font-display);
-  font-size: var(--t-display-md);
+  font-size: 2.5rem;
   color: var(--ink);
   margin: 0;
 }
@@ -70,7 +75,7 @@
   font-size: var(--t-eyebrow);
   color: var(--ash);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.22em;
   margin: 0;
 }
 
@@ -80,8 +85,14 @@
   font-size: var(--t-body);
   color: var(--ash);
   margin-top: var(--s-20);
+  font-style: italic;
 }
 
 .error {
   color: var(--oxblood);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

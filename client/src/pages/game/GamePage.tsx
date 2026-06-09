@@ -1,8 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Chessboard, type PieceDropHandlerArgs } from 'react-chessboard';
-import { Chess, type Square } from 'chess.js';
+import ChessScene from '../../components/ChessScene';
 import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import { useGame } from './useGame';
@@ -45,59 +43,10 @@ export default function GamePage() {
   const [confirmResign, setConfirmResign] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
-  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
-  useEffect(() => setSelectedSquare(null), [fen]);
-
   const spectatorToken = game?.spectatorToken ?? null;
   const spectatorLink = spectatorToken
     ? `${window.location.origin}/spectate/${spectatorToken}`
     : '';
-
-  const squareStyles = useMemo<Record<string, CSSProperties>>(() => {
-    if (!selectedSquare || !isMyTurn) return {};
-    let moves: Array<{ to: string; captured?: string }> = [];
-    try {
-      moves = new Chess(fen).moves({
-        square: selectedSquare as Square,
-        verbose: true,
-      }) as typeof moves;
-    } catch {
-      return {};
-    }
-    if (moves.length === 0) return {};
-    const dot =
-      'radial-gradient(circle, rgba(122, 20, 24, 0.45) 22%, transparent 24%)';
-    const ring =
-      'radial-gradient(circle, transparent 56%, rgba(122, 20, 24, 0.55) 56%, rgba(122, 20, 24, 0.55) 64%, transparent 64%)';
-    const out: Record<string, CSSProperties> = {
-      [selectedSquare]: { background: 'rgba(122, 20, 24, 0.28)' },
-    };
-    for (const m of moves) {
-      out[m.to] = { background: m.captured ? ring : dot };
-    }
-    return out;
-  }, [selectedSquare, fen, isMyTurn]);
-
-  const onPieceDrop = useCallback(
-    ({ sourceSquare, targetSquare }: PieceDropHandlerArgs): boolean => {
-      if (!targetSquare) return false;
-      return tryMove({ from: sourceSquare, to: targetSquare, promotion: 'q' });
-    },
-    [tryMove],
-  );
-
-  const onSquareClick = useCallback(
-    ({ square }: { square: string }) => {
-      if (!myColor || game?.status !== 'active' || !isMyTurn) return;
-
-      if (selectedSquare && selectedSquare !== square) {
-        if (tryMove({ from: selectedSquare, to: square, promotion: 'q' })) return;
-      }
-
-      setSelectedSquare((prev) => (prev === square ? null : square));
-    },
-    [myColor, game?.status, isMyTurn, selectedSquare, tryMove],
-  );
 
   const handleConfirmResign = () => {
     resign();
@@ -165,16 +114,11 @@ export default function GamePage() {
 
       <div className={styles.boardArea}>
         <div className={styles['board-wrapper']}>
-          <Chessboard
-            options={{
-              id: 'game-board',
-              position: fen,
-              onPieceDrop,
-              onSquareClick,
-              squareStyles,
-              boardOrientation: myColor ?? 'white',
-              allowDragging: game.status === 'active' && isMyTurn && !gameOver,
-            }}
+          <ChessScene
+            fen={fen}
+            myColor={myColor ?? 'white'}
+            isMyTurn={game.status === 'active' && isMyTurn && !gameOver}
+            onMove={(from, to) => tryMove({ from, to, promotion: 'q' })}
           />
 
           {game.status === 'waiting' && !gameOver && (

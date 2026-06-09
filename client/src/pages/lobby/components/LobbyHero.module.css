@@ -4,7 +4,7 @@
   gap: var(--s-12);
   align-items: end;
   border-bottom: 1px solid var(--rule);
-  padding-bottom: var(--s-10);
+  padding-bottom: var(--s-12);
   position: relative;
 }
 
@@ -57,22 +57,19 @@
   justify-content: flex-end;
 }
 
-/* Create button */
 .createBtn {
   background: var(--ink);
   color: var(--paper);
-  padding: var(--s-6) var(--s-8);
+  padding: var(--s-5) var(--s-8);
   border: 1px solid var(--ink);
+  border-radius: 9999px;
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   cursor: pointer;
-  transition:
-    background var(--t-med) var(--ease),
-    border-color var(--t-med) var(--ease),
-    transform var(--t-fast) var(--ease);
+  transition: all var(--t-fast) var(--ease);
 }
 
 .createBtn::before {
@@ -80,8 +77,6 @@
   font-family: var(--font-display);
   font-size: 1.25rem;
   margin-right: var(--s-3);
-  letter-spacing: 0;
-  text-transform: none;
   display: inline-block;
   transform: translateY(2px);
 }
@@ -89,29 +84,34 @@
 .createBtn:hover:not(:disabled) {
   background: var(--oxblood);
   border-color: var(--oxblood);
+  transform: translateY(-2px);
 }
 
 .createBtn:active:not(:disabled) { transform: translateY(1px); }
 
 .createBtn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* My-game card */
 .myGame {
-  border: 1px solid var(--ink);
+  border: 1px solid var(--rule);
   background: var(--paper-deep);
   padding: var(--s-6);
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
   position: relative;
+  border-radius: 12px;
 }
 
 .myGame::before {
   content: '';
   position: absolute;
-  inset: -1px auto -1px -1px;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: 4px;
   background: var(--oxblood);
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
 }
 
 .myGameLabel {
@@ -149,17 +149,15 @@
 .openBtn,
 .cancelBtn {
   flex: 1;
-  padding: var(--s-4) var(--s-5);
+  padding: var(--s-3) var(--s-5);
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
+  border-radius: 9999px;
   cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease),
-    border-color var(--t-fast) var(--ease),
-    color var(--t-fast) var(--ease);
+  transition: all var(--t-fast) var(--ease);
 }
 
 .openBtn {
@@ -168,7 +166,11 @@
   border: 1px solid var(--ink);
 }
 
-.openBtn:hover { background: var(--oxblood); border-color: var(--oxblood); }
+.openBtn:hover { 
+  background: var(--oxblood); 
+  border-color: var(--oxblood);
+  transform: translateY(-1px);
+}
 
 .cancelBtn {
   background: transparent;
@@ -184,5 +186,5 @@
 .cancelBtn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 @media (max-width: 880px) {
-  .hero { grid-template-columns: 1fr; gap: var(--s-8); }
+  .hero { grid-template-columns: 1fr; gap: var(--s-10); }
 }

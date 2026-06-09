@@ -10,6 +10,7 @@
   padding: var(--s-6);
   background: rgba(246, 239, 226, 0.94);
   text-align: center;
+  border-radius: 12px;
   animation: fadeIn 350ms var(--ease) backwards;
 }
 
@@ -54,10 +55,9 @@
   text-transform: uppercase;
   padding: var(--s-3) var(--s-6);
   border: 1px solid var(--ink);
+  border-radius: 9999px;
   cursor: pointer;
-  transition:
-    background var(--t-fast) var(--ease),
-    border-color var(--t-fast) var(--ease);
+  transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
 
 .primary:hover:not(:disabled) {
@@ -79,6 +79,7 @@
   text-transform: uppercase;
   padding: var(--s-3) var(--s-6);
   border: 1px solid var(--rule);
+  border-radius: 9999px;
   cursor: pointer;
   transition: border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }

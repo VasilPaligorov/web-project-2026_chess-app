@@ -1,35 +1,42 @@
+
 .panel {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--rule);
-  background: var(--paper);
+  background: var(--paper-deep); 
+  border-radius: 12px; 
   height: 100%;
+  width: 100%;
   min-height: 320px;
+  max-height: 575px;
+  overflow: hidden; 
+  box-shadow: var(--shadow-sm);
 }
 
 .heading {
   font-family: var(--font-mono);
   font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
+  letter-spacing: 0.15em; 
   text-transform: uppercase;
-  color: var(--ink);
+  color: var(--ash); 
   margin: 0;
-  padding: var(--s-3) var(--s-4);
+  padding: var(--s-4) var(--s-4);
+  background: var(--paper); 
   border-bottom: 1px solid var(--rule);
 }
 
 .messageList {
   flex: 1;
   overflow-y: auto;
-  padding: var(--s-3) var(--s-4);
+  padding: var(--s-4) var(--s-4);
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--s-4); 
 }
 
 .empty {
   font-family: var(--font-body);
-  font-style: italic;
+  font-style: normal; 
   color: var(--ash-soft);
   font-size: var(--t-body-sm);
   margin: auto;
@@ -39,8 +46,8 @@
 .message {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  max-width: 85%;
+  gap: var(--s-1);
+  max-width: 80%; 
 }
 
 .messageOwn {
@@ -55,43 +62,57 @@
 
 .username {
   font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.1em;
-  color: var(--ash);
+  font-size: 0.6875rem; 
+  letter-spacing: 0.05em;
+  color: var(--ash-soft);
   text-transform: uppercase;
 }
 
 .usernameOwn {
-  color: var(--oxblood);
+  color: var(--ink-soft); 
 }
 
 .text {
   font-family: var(--font-body);
   font-size: var(--t-body-sm);
-  color: var(--ink);
-  background: var(--paper-deep);
+  color: var(--ink-soft);
+  background: var(--paper); 
+  border: 1px solid var(--rule);
   padding: var(--s-2) var(--s-3);
-  line-height: 1.45;
+  border-radius: 8px; 
+  line-height: 1.5;
   word-break: break-word;
+  box-shadow: var(--shadow-sm); 
 }
 
 .messageOwn .text {
-  background: var(--oxblood-tint);
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  box-shadow: none;
 }
 
 .time {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--ash-soft);
+  margin-top: 2px;
 }
 
 .inputRow {
   display: flex;
+  align-items: center;    
   border-top: 1px solid var(--rule);
+  background: var(--paper);
+  padding: var(--s-1);
+  box-sizing: border-box; 
+  width: 100%;
 }
 
 .input {
   flex: 1;
+  min-width: 0;           
+  width: 100%;
   background: transparent;
   border: none;
   outline: none;
@@ -99,11 +120,12 @@
   font-size: var(--t-body-sm);
   color: var(--ink);
   padding: var(--s-3) var(--s-4);
+  box-sizing: border-box;
 }
 
 .input::placeholder {
   color: var(--ash-soft);
-  font-style: italic;
+  font-style: normal;
 }
 
 .input:disabled {
@@ -112,24 +134,26 @@
 
 .sendBtn {
   background: transparent;
-  border: none;
-  border-left: 1px solid var(--rule);
+  border: none; 
   font-family: var(--font-mono);
   font-size: var(--t-eyebrow);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink);
-  padding: var(--s-3) var(--s-4);
+  padding: var(--s-2) var(--s-4);
+  border-radius: 6px; 
   cursor: pointer;
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  flex-shrink: 0;   
+  white-space: nowrap;
 }
 
 .sendBtn:hover:not(:disabled) {
-  background: var(--oxblood);
+  background: var(--ink);
   color: var(--paper);
 }
 
 .sendBtn:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
 }
