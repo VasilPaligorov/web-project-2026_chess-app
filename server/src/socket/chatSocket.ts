@@ -37,6 +37,7 @@ async function onChatSend(socket: Socket, userId: string, payload: ChatSendPaylo
   });
 
   const outgoing: ChatMessagePayload = {
+    id: message._id.toString(),
     userId,
     username: user.username,
     text,
@@ -50,6 +51,7 @@ export async function sendChatHistory(socket: Socket, gameId: string): Promise<v
   const messages = await Message.find({ gameId }).sort({ createdAt: 1 }).limit(50).lean();
 
   const history: ChatMessagePayload[] = messages.map((m) => ({
+    id: m._id.toString(),
     userId: m.userId.toString(),
     username: m.username,
     text: m.text,
