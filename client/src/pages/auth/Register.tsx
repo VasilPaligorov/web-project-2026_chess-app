@@ -1,15 +1,11 @@
-import { useState, FormEvent } from 'react';
+import { useState, SubmitEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import api from '../../services/api';
+import api, { getErrorMessage } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
-import type { User } from '../../../../shared/types';
+import type { AuthResponse } from '../../../../shared/types';
+import PasswordInput from './PasswordInput';
+import GoogleAuthButton from '../../components/GoogleAuthButton';
 import styles from './Auth.module.css';
-
-interface RegisterResponse {
-  success: boolean;
-  data: { user: User; token: string };
-}
 
 type RedirectState = { from?: { pathname?: string } } | null;
 
@@ -29,12 +25,12 @@ export default function Register() {
 
   if (user) return <Navigate to={from} replace />;
 
-  async function onSubmit(e: FormEvent) {
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const res = await api.post<RegisterResponse>('/api/auth/register', {
+      const res = await api.post<AuthResponse>('/api/auth/register', {
         username,
         email,
         password,
@@ -42,11 +38,7 @@ export default function Register() {
       login(res.data.data.user, res.data.data.token);
       navigate(from, { replace: true });
     } catch (err) {
-      const message =
-        axios.isAxiosError(err) && err.response?.data?.message
-          ? err.response.data.message
-          : 'Registration failed. Please try again.';
-      setError(message);
+      setError(getErrorMessage(err, 'Registration failed. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -93,14 +85,11 @@ export default function Register() {
 
           <label className={styles.label}>
             Password
-            <input
-              className={styles.input}
-              type="password"
+            <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
+              onChange={setPassword}
               autoComplete="new-password"
+              minLength={6}
             />
           </label>
 
@@ -110,6 +99,12 @@ export default function Register() {
             {loading ? 'Creating account…' : 'Sign up'}
           </button>
         </form>
+
+        <div className={styles.divider}><span>or</span></div>
+
+        <div className={styles.googleWrap}>
+          <GoogleAuthButton label="Sign up with Google" redirectTo={from} onError={setError} />
+        </div>
 
         <div className={styles.footer}>
           Already have an account? <Link to="/login">Log in</Link>

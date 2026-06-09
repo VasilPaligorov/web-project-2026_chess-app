@@ -3,7 +3,8 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IUser extends Document {
   username: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
+  googleId?: string;
   elo: number;
   peakElo: number;
   wins: number;
@@ -16,7 +17,8 @@ const userSchema = new Schema<IUser>(
   {
     username: { type: String, required: true, unique: true, trim: true },
     email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    passwordHash: { type: String, select: false },
+    googleId: { type: String, unique: true, sparse: true },
     elo:     { type: Number, default: 1200, index: true },
     peakElo: { type: Number, default: 1200 },
     wins:    { type: Number, default: 0 },

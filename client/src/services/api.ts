@@ -17,7 +17,10 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     const url: string = err.config?.url ?? '';
-    const isAuthAttempt = url.includes('/api/auth/login') || url.includes('/api/auth/register');
+    const isAuthAttempt =
+      url.includes('/api/auth/login') ||
+      url.includes('/api/auth/register') ||
+      url.includes('/api/auth/google');
     if (err.response?.status === 401 && !isAuthAttempt) {
       useAuthStore.getState().logout();
     }
@@ -26,3 +29,9 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export function getErrorMessage(err: unknown, fallback: string): string {
+  return axios.isAxiosError(err) && err.response?.data?.message
+    ? err.response.data.message
+    : fallback;
+}

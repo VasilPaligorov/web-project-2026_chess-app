@@ -5,11 +5,11 @@ import {
   createGame,
   listWaitingGames,
   getCurrentGames,
-  getSpectateGame,
   getGameById,
   joinGame,
   cancelGame,
 } from './game.controllers';
+import { getSpectateGame } from '../controllers/spectator.controller';
 
 const router = Router();
 

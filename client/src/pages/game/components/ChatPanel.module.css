@@ -1,42 +1,42 @@
-
 .panel {
   display: flex;
   flex-direction: column;
   border: 1px solid var(--rule);
-  background: var(--paper-deep); 
-  border-radius: 12px; 
+  background: var(--paper-deep);
+  border-radius: 12px;
   height: 100%;
   width: 100%;
   min-height: 320px;
   max-height: 575px;
-  overflow: hidden; 
+  overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
 
 .heading {
   font-family: var(--font-mono);
   font-size: var(--t-eyebrow);
-  letter-spacing: 0.15em; 
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--ash); 
+  color: var(--ash);
   margin: 0;
   padding: var(--s-4) var(--s-4);
-  background: var(--paper); 
+  background: var(--paper);
   border-bottom: 1px solid var(--rule);
 }
 
 .messageList {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: var(--s-4) var(--s-4);
   display: flex;
   flex-direction: column;
-  gap: var(--s-4); 
+  gap: var(--s-4);
 }
 
 .empty {
   font-family: var(--font-body);
-  font-style: normal; 
+  font-style: normal;
   color: var(--ash-soft);
   font-size: var(--t-body-sm);
   margin: auto;
@@ -47,7 +47,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
-  max-width: 80%; 
+  max-width: 80%;
 }
 
 .messageOwn {
@@ -62,27 +62,27 @@
 
 .username {
   font-family: var(--font-mono);
-  font-size: 0.6875rem; 
+  font-size: 0.6875rem;
   letter-spacing: 0.05em;
   color: var(--ash-soft);
   text-transform: uppercase;
 }
 
 .usernameOwn {
-  color: var(--ink-soft); 
+  color: var(--ink-soft);
 }
 
 .text {
   font-family: var(--font-body);
   font-size: var(--t-body-sm);
   color: var(--ink-soft);
-  background: var(--paper); 
+  background: var(--paper);
   border: 1px solid var(--rule);
   padding: var(--s-2) var(--s-3);
-  border-radius: 8px; 
+  border-radius: 8px;
   line-height: 1.5;
   word-break: break-word;
-  box-shadow: var(--shadow-sm); 
+  box-shadow: var(--shadow-sm);
 }
 
 .messageOwn .text {
@@ -101,17 +101,17 @@
 
 .inputRow {
   display: flex;
-  align-items: center;    
+  align-items: center;
   border-top: 1px solid var(--rule);
   background: var(--paper);
   padding: var(--s-1);
-  box-sizing: border-box; 
+  box-sizing: border-box;
   width: 100%;
 }
 
 .input {
   flex: 1;
-  min-width: 0;           
+  min-width: 0;
   width: 100%;
   background: transparent;
   border: none;
@@ -133,18 +133,18 @@
 }
 
 .sendBtn {
+  flex-shrink: 0;
   background: transparent;
-  border: none; 
+  border: none;
   font-family: var(--font-mono);
   font-size: var(--t-eyebrow);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink);
   padding: var(--s-2) var(--s-4);
-  border-radius: 6px; 
+  border-radius: 6px;
   cursor: pointer;
   transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
-  flex-shrink: 0;   
   white-space: nowrap;
 }
 

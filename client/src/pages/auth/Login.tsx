@@ -1,42 +1,42 @@
-import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import api from '../../services/api';
+import { useState, SubmitEvent } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import api, { getErrorMessage } from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
-import type { User } from '../../../../shared/types';
+import type { AuthResponse } from '../../../../shared/types';
+import PasswordInput from './PasswordInput';
+import GoogleAuthButton from '../../components/GoogleAuthButton';
 import styles from './Auth.module.css';
 
-interface LoginResponse {
-  success: boolean;
-  data: { user: User; token: string };
-}
+type RedirectState = { from?: { pathname?: string } } | null;
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const user = useAuthStore((s) => s.user);
   const login = useAuthStore((s) => s.login);
+
+  const from = (location.state as RedirectState)?.from?.pathname ?? '/lobby';
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function onSubmit(e: FormEvent) {
+  if (user) return <Navigate to={from} replace />;
+
+  async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const res = await api.post<LoginResponse>('/api/auth/login', {
+      const res = await api.post<AuthResponse>('/api/auth/login', {
         identifier,
         password,
       });
       login(res.data.data.user, res.data.data.token);
-      navigate('/', { replace: true });
+      navigate(from, { replace: true });
     } catch (err) {
-      const message =
-        axios.isAxiosError(err) && err.response?.data?.message
-          ? err.response.data.message
-          : 'Login failed. Please try again.';
-      setError(message);
+      setError(getErrorMessage(err, 'Login failed. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -67,12 +67,9 @@ export default function Login() {
 
           <label className={styles.label}>
             Password
-            <input
-              className={styles.input}
-              type="password"
+            <PasswordInput
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+              onChange={setPassword}
               autoComplete="current-password"
             />
           </label>
@@ -83,6 +80,12 @@ export default function Login() {
             {loading ? 'Logging in…' : 'Log in'}
           </button>
         </form>
+
+        <div className={styles.divider}><span>or</span></div>
+
+        <div className={styles.googleWrap}>
+          <GoogleAuthButton label="Log in with Google" redirectTo={from} onError={setError} />
+        </div>
 
         <div className={styles.footer}>
           New here? <Link to="/register">Create an account</Link>
