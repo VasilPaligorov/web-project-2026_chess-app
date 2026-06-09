@@ -75,7 +75,7 @@ export function ChatPanel({ messages, currentUserId, disabled, onSend }: ChatPan
           onClick={handleSend}
           disabled={disabled || !input.trim()}
         >
-          Send
+          ⬆
         </button>
       </div>
     </div>
