@@ -177,6 +177,7 @@ async function onMoveMake(
 
   game.fen = chess.fen();
   game.pgn = chess.pgn();
+  game.drawOffer = null;
 
   const end = detectGameEnd(chess, color);
   if (end) {

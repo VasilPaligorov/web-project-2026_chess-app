@@ -101,6 +101,10 @@ export function useGame(gameId: string | undefined): UseGameResult {
       setDrawPending(false);
       setActionMsg('Draw declined');
     };
+    const onGameStart = (payload: Game) => {
+      if (payload?._id !== gameId) return;
+      fetchGame();
+    };
 
     const fetchGame = () => {
       api
@@ -140,6 +144,7 @@ export function useGame(gameId: string | undefined): UseGameResult {
     socket.on(SocketEvents.MOVE_ERROR, onMoveError);
     socket.on(SocketEvents.DRAW_OFFER, onDrawOffer);
     socket.on(SocketEvents.DRAW_DECLINED, onDrawDeclined);
+    socket.on(SocketEvents.GAME_START, onGameStart);
 
     socket.emit(SocketEvents.GAME_JOIN, gameId);
     fetchGame();
@@ -152,6 +157,7 @@ export function useGame(gameId: string | undefined): UseGameResult {
       socket.off(SocketEvents.MOVE_ERROR, onMoveError);
       socket.off(SocketEvents.DRAW_OFFER, onDrawOffer);
       socket.off(SocketEvents.DRAW_DECLINED, onDrawDeclined);
+      socket.off(SocketEvents.GAME_START, onGameStart);
       socket.emit(SocketEvents.GAME_LEAVE, gameId);
     };
   }, [gameId, user?._id, setUser]);

@@ -16,6 +16,7 @@ interface VerboseMove {
   san: string;
   from: string;
   to: string;
+  promotion?: string;
 }
 
 interface Replay {
@@ -30,16 +31,14 @@ function buildReplay(pgn: string): Replay {
   const chess = new Chess();
   try {
     chess.loadPgn(pgn);
-  } catch {
-    return { fens, moves };
-  }
-  const history = chess.history({ verbose: true }) as VerboseMove[];
-  const replay = new Chess();
-  for (const m of history) {
-    replay.move({ from: m.from, to: m.to });
-    fens.push(replay.fen());
-    moves.push({ san: m.san, from: m.from, to: m.to });
-  }
+    const history = chess.history({ verbose: true }) as VerboseMove[];
+    const replay = new Chess();
+    for (const m of history) {
+      replay.move({ from: m.from, to: m.to, promotion: m.promotion });
+      fens.push(replay.fen());
+      moves.push({ san: m.san, from: m.from, to: m.to });
+    }
+  } catch {}
   return { fens, moves };
 }
 
