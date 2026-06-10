@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { Types } from 'mongoose';
 import { User } from '../models/User';
 import { Game } from '../models/Game';
+import { parseObjectId } from './game.helpers';
 
 const PROFILE_FIELDS = 'username elo peakElo wins losses draws createdAt';
 
@@ -13,8 +13,8 @@ export async function getLeaderboard(req: Request, res: Response) {
 }
 
 export async function getUserById(req: Request, res: Response) {
-  const { id } = req.params;
-  if (typeof id !== 'string' || !Types.ObjectId.isValid(id)) {
+  const id = parseObjectId(req.params.id);
+  if (!id) {
     res.status(400).json({ success: false, message: 'Invalid user id' });
     return;
   }
@@ -27,8 +27,8 @@ export async function getUserById(req: Request, res: Response) {
 }
 
 export async function getUserGames(req: Request, res: Response) {
-  const { id } = req.params;
-  if (typeof id !== 'string' || !Types.ObjectId.isValid(id)) {
+  const id = parseObjectId(req.params.id);
+  if (!id) {
     res.status(400).json({ success: false, message: 'Invalid user id' });
     return;
   }
