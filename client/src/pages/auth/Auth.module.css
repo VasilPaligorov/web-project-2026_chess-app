@@ -166,7 +166,7 @@
   text-transform: uppercase;
   cursor: pointer;
   margin-top: var(--s-4);
-  border-radius: 10px;
+  border-radius: 99999px;
   transition:
     background var(--t-med) var(--ease),
     border-color var(--t-med) var(--ease),
@@ -230,7 +230,7 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
   cursor: pointer;
-  border-radius: 0;
+  border-radius: 99999px;
   transition:
     border-color var(--t-med) var(--ease),
     color var(--t-med) var(--ease),

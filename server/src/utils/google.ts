@@ -6,7 +6,6 @@ export interface GoogleProfile {
   emailVerified: boolean;
 }
 
-// Lazily created so the server still boots when Google login is not configured.
 let client: OAuth2Client | null = null;
 
 const getClient = (): OAuth2Client => {
@@ -19,7 +18,6 @@ const getClient = (): OAuth2Client => {
 export async function verifyGoogleAccessToken(accessToken: string): Promise<GoogleProfile> {
   const info = await getClient().getTokenInfo(accessToken);
 
-  // Ensure the token was issued for THIS app, not some other Google client.
   if (info.aud !== process.env.GOOGLE_CLIENT_ID) {
     throw new Error('Google token audience mismatch');
   }
