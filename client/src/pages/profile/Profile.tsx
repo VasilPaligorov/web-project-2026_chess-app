@@ -5,6 +5,7 @@ import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
 import type { Game, UserStats } from '../../../../shared/types';
 import { ReplayViewer } from './components/ReplayViewer';
+import { formatDate, formatMonth, pct } from './profile.utils';
 import styles from './Profile.module.css';
 
 interface UserResponse {
@@ -14,26 +15,6 @@ interface UserResponse {
 interface GamesResponse {
   success: boolean;
   data: Game[];
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-function formatMonth(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-  });
-}
-
-function pct(wins: number, total: number): string {
-  if (total === 0) return '—';
-  return `${Math.round((wins / total) * 100)}%`;
 }
 
 export default function Profile() {

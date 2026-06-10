@@ -1,45 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Chess } from 'chess.js';
 import { Chessboard } from 'react-chessboard';
 import type { Game } from '../../../../../shared/types';
+import { buildReplay, type VerboseMove } from '../profile.utils';
 import styles from './ReplayViewer.module.css';
-
-const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 interface Props {
   game: Game;
   viewerColor: 'white' | 'black';
   onClose: () => void;
-}
-
-interface VerboseMove {
-  san: string;
-  from: string;
-  to: string;
-  promotion?: string;
-}
-
-interface Replay {
-  fens: string[];
-  moves: VerboseMove[];
-}
-
-function buildReplay(pgn: string): Replay {
-  const fens: string[] = [STARTING_FEN];
-  const moves: VerboseMove[] = [];
-  if (!pgn) return { fens, moves };
-  const chess = new Chess();
-  try {
-    chess.loadPgn(pgn);
-    const history = chess.history({ verbose: true }) as VerboseMove[];
-    const replay = new Chess();
-    for (const m of history) {
-      replay.move({ from: m.from, to: m.to, promotion: m.promotion });
-      fens.push(replay.fen());
-      moves.push({ san: m.san, from: m.from, to: m.to });
-    }
-  } catch {}
-  return { fens, moves };
 }
 
 export function ReplayViewer({ game, viewerColor, onClose }: Props) {
