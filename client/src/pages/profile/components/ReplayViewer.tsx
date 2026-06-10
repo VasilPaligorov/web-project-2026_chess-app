@@ -66,6 +66,8 @@ export function ReplayViewer({ game, viewerColor, onClose }: Props) {
             position: fens[plyIndex],
             boardOrientation: viewerColor,
             allowDragging: false,
+            lightSquareStyle: { backgroundColor: '#7f7f7f' },
+            darkSquareStyle: { backgroundColor: '#444444' },
             squareStyles,
           }}
         />

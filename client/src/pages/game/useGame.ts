@@ -102,8 +102,9 @@ export function useGame(gameId: string | undefined): UseGameResult {
       setActionMsg('Draw declined');
     };
     const onGameStart = (payload: Game) => {
-      if (payload?._id !== gameId) return;
-      fetchGame();
+      if (String(payload?._id) !== gameId) return;
+      setGame(payload);
+      setFen(payload.fen);
     };
 
     const fetchGame = () => {

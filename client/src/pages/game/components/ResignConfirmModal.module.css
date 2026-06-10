@@ -99,6 +99,7 @@
 .danger:hover {
   background: var(--oxblood-deep);
   border-color: var(--oxblood-deep);
+  color: var(--paper);
 }
 
 @keyframes fadeIn {

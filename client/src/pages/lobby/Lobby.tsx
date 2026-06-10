@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
-import { useWaitingGames } from '../../hooks/useWaitingGames';
-import { SocketEvents, type Game } from '../../../../shared/types';
+import { useWaitingGames } from './useWaitingGames';
+import { useLobby } from './useLobby';
+import { type Game } from '../../../../shared/types';
 import { ActiveGamesList } from './components/ActiveGamesList';
 import { LobbyHero } from './components/LobbyHero';
 import { WaitingGamesList } from './components/WaitingGamesList';
@@ -12,42 +12,21 @@ import { pickError } from './lobby.utils';
 import styles from './Lobby.module.css';
 
 interface GameResponse { success: boolean; message?: string; data?: Game }
-interface CurrentGamesResponse { success: boolean; data: Game[] }
 
 export default function Lobby() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { games, error: listError, refresh } = useWaitingGames();
+  const { myActiveGames } = useLobby({
+    onGameStart: (game) => navigate(`/game/${game._id}`),
+  });
 
-  const [currentGames, setCurrentGames] = useState<Game[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [joiningId, setJoiningId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const myWaitingGame = games?.find((g) => g.whitePlayer._id === user?._id) ?? null;
-  const myActiveGames = currentGames.filter((g) => g.status === 'active');
-
-  const fetchCurrentGames = useCallback(async () => {
-    try {
-      const { data } = await api.get<CurrentGamesResponse>('/api/games/me/current');
-      if (data.success) setCurrentGames(data.data);
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    fetchCurrentGames();
-    const socket = getSocket();
-    const onGameStart = (game: Game) => navigate(`/game/${game._id}`);
-    socket.on(SocketEvents.GAME_START, onGameStart);
-    socket.on(SocketEvents.GAME_START, fetchCurrentGames);
-    socket.on(SocketEvents.LOBBY_CHANGED, fetchCurrentGames);
-    return () => {
-      socket.off(SocketEvents.GAME_START, onGameStart);
-      socket.off(SocketEvents.GAME_START, fetchCurrentGames);
-      socket.off(SocketEvents.LOBBY_CHANGED, fetchCurrentGames);
-    };
-  }, [navigate, fetchCurrentGames]);
 
   const handleCreate = async () => {
     setActionError(null);

@@ -63,6 +63,7 @@
 .primary:hover {
   background: var(--oxblood);
   border-color: var(--oxblood);
+  color: var(--paper);
 }
 
 .secondary {

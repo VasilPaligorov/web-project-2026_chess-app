@@ -91,6 +91,7 @@
 
 .copy:hover {
   background: var(--oxblood);
+  color: var(--paper);
 }
 
 @keyframes fadeIn {

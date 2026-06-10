@@ -1,81 +1,28 @@
-.list {
-  display: flex;
-  flex-direction: column;
-}
+.list { composes: list from './_listBase.module.css'; }
+.header { composes: header from './_listBase.module.css'; }
+.label { composes: label from './_listBase.module.css'; }
+.count { composes: count from './_listBase.module.css'; }
 
-.header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: var(--s-4);
-  border-bottom: 1px solid var(--rule);
-  margin-bottom: var(--s-2);
-}
-
-.label {
-  font-family: var(--font-mono);
-  font-size: var(--t-eyebrow);
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ink);
-}
-
-.count {
-  font-family: var(--font-mono);
-  font-size: 1.25rem;
-  color: var(--oxblood);
-}
-
-.emptyState {
-  padding: var(--s-20) var(--s-6);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s-3);
-}
+.emptyState { composes: emptyState from './_listBase.module.css'; }
 
 .emptyGlyph {
-  font-family: var(--font-display);
-  font-size: 6rem;
-  color: var(--ink);
+  composes: emptyGlyph from './_listBase.module.css';
   opacity: 0.1;
-  line-height: 1;
 }
 
-.emptyHeading {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  color: var(--ink);
-  margin-top: var(--s-4);
-}
-
-.emptyHint {
-  font-family: var(--font-body);
-  font-size: var(--t-body);
-  font-style: italic;
-  color: var(--ash);
-}
+.emptyHeading { composes: emptyHeading from './_listBase.module.css'; }
+.emptyHint { composes: emptyHint from './_listBase.module.css'; }
 
 .rows {
-  display: flex;
-  flex-direction: column;
+  composes: rows from './_listBase.module.css';
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .row {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--s-6);
-  padding: var(--s-6) var(--s-4);
-  border-bottom: 1px solid var(--rule);
-  position: relative;
+  composes: row from './_listBase.module.css';
   background: var(--oxblood-tint);
-  transition: all var(--t-fast) var(--ease);
-  animation: rowRise 600ms var(--ease) backwards;
 }
 
 .row::before {
@@ -90,37 +37,13 @@
 
 .row:hover {
   background: rgba(122, 20, 24, 0.05);
-  transform: translateX(4px);
 }
 
-.row:nth-child(1) { animation-delay: 40ms; }
-.row:nth-child(2) { animation-delay: 100ms; }
-.row:nth-child(3) { animation-delay: 160ms; }
-.row:nth-child(4) { animation-delay: 220ms; }
-.row:nth-child(5) { animation-delay: 280ms; }
-.row:nth-child(n+6) { animation-delay: 340ms; }
-
-.rowNumber {
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  color: var(--ash);
-  min-width: 2.5em;
-}
-
-.rowMeta {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.rowNumber { composes: rowNumber from './_listBase.module.css'; }
+.rowMeta { composes: rowMeta from './_listBase.module.css'; }
 
 .rowName {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  color: var(--ink);
-  margin: 0;
-  display: flex;
-  align-items: baseline;
+  composes: rowName from './_listBase.module.css';
   gap: var(--s-2);
   letter-spacing: -0.005em;
 }
@@ -133,27 +56,14 @@
 }
 
 .rowDetails {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s-2);
-  font-family: var(--font-body);
-  font-size: var(--t-body-sm);
-  color: var(--ash);
+  composes: rowDetails from './_listBase.module.css';
   margin: 0;
   flex-wrap: wrap;
 }
 
-.elo {
-  font-family: var(--font-mono);
-  font-size: var(--t-mono);
-  color: var(--ink);
-}
-
-.dot { color: var(--ash-soft); }
-
-.timestamp {
-  font-style: italic;
-}
+.elo { composes: elo from './_listBase.module.css'; }
+.dot { composes: dot from './_listBase.module.css'; }
+.timestamp { composes: timestamp from './_listBase.module.css'; }
 
 .turn {
   font-family: var(--font-mono);
@@ -172,10 +82,7 @@
   color: var(--ash);
 }
 
-.rowAction {
-  display: flex;
-  justify-content: flex-end;
-}
+.rowAction { composes: rowAction from './_listBase.module.css'; }
 
 .resumeBtn {
   background: var(--oxblood);
@@ -195,6 +102,7 @@
 .resumeBtn:hover {
   background: var(--oxblood-deep);
   border-color: var(--oxblood-deep);
+  color: var(--paper);
   transform: translateY(-1px);
 }
 
@@ -202,21 +110,7 @@
   transform: translateY(1px);
 }
 
-@keyframes rowRise {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
 @media (max-width: 880px) {
-  .row {
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
-    gap: var(--s-3) var(--s-4);
-  }
-  .rowAction {
-    grid-column: 1 / -1;
-    justify-content: stretch;
-  }
   .resumeBtn {
     width: 100%;
     padding: var(--s-3);
