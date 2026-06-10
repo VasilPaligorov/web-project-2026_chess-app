@@ -96,6 +96,7 @@ export interface ChatSendPayload {
 }
 
 export interface ChatMessagePayload {
+  id: string;
   userId: string;
   username: string;
   text: string;

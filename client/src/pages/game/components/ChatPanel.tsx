@@ -41,11 +41,11 @@ export function ChatPanel({ messages, currentUserId, disabled, onSend }: ChatPan
         {messages.length === 0 && (
           <p className={styles.empty}>No messages yet.</p>
         )}
-        {messages.map((msg, i) => {
+        {messages.map((msg) => {
           const isOwn = msg.userId === currentUserId;
           return (
             <div
-              key={i}
+              key={msg.id}
               className={`${styles.message} ${isOwn ? styles.messageOwn : styles.messageOpponent}`}
             >
               <span className={`${styles.username} ${isOwn ? styles.usernameOwn : ''}`}>
