@@ -1,205 +1,294 @@
 # Chess App — Server
 
-The Node.js + Express + TypeScript backend for the Head-to-Head Chess application. Handles authentication, game logic, real-time communication via Socket.IO, and all database interactions through Mongoose.
+Node.js + Express + TypeScript backend на шахматното приложение. Обработва автентикация, авторитетна валидация на ходовете, реал-тайм комуникация през Socket.IO и всички взаимодействия с базата през Mongoose.
 
-## Tech stack
+## Технологичен стек
 
-- **Node.js** with TypeScript (`ts-node-dev` for dev, compiled JS for production)
-- **Express** — REST API
-- **Socket.IO** — real-time bidirectional events (moves, game start, spectators)
-- **Mongoose** — MongoDB ODM
-- **chess.js** — server-side move validation and FEN/PGN management
-- **jsonwebtoken** — JWT creation and verification
-- **bcrypt** — password hashing
-- **dotenv** — environment configuration
+- **Node.js + TypeScript** (`ts-node-dev` за dev, компилиран JS за production)
+- **Express 4** — REST API
+- **Socket.IO 4** — двупосочни събития в реално време (ходове, start, spectator)
+- **Mongoose 8** — MongoDB ODM
+- **chess.js** — авторитетна валидация на ходове и FEN/PGN управление
+- **jsonwebtoken** — JWT създаване и верификация
+- **bcrypt** — хеширане на пароли (12 salt rounds)
+- **google-auth-library** — верификация на Google access токени
+- **uuid** — генериране на spectator токени
+- **dotenv** — конфигурация през environment variables
 
-## Getting started
+## Стартиране
 
-Install dependencies from the project root (recommended):
+Инсталация от root-а (препоръчително):
 
 ```bash
-# from /chess-app root
+# от корена на repo-то
 npm run install:all
 ```
 
-Or install just the server:
+Или само сървъра:
 
 ```bash
 cd server
 npm install
 ```
 
-Start in development mode (with hot reload):
+Старт в development режим (с hot reload):
 
 ```bash
 npm run dev
 ```
 
-The server runs on `http://localhost:3000` by default.
+Сървърът тръгва на `http://localhost:3000`.
 
-## Prerequisites
+## Изисквания
 
-- **MongoDB** running locally on `mongodb://localhost:27017` (or provide a Atlas connection string in `.env`)
-- Node.js 18+
+- **Node.js** 20+
+- **MongoDB** 6+ (локално на `mongodb://localhost:27017` или Atlas connection string в `.env`)
 
-## Environment variables
+## Environment променливи
 
-Create a `.env` file in `/server`:
+Създай `server/.env` с тези стойности (виж [`.env.example`](.env.example)):
 
 ```env
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/chess-app
-JWT_SECRET=replace_this_with_a_long_random_string
-JWT_EXPIRES_IN=7d
-CLIENT_URL=http://localhost:5173
+MONGO_URI=mongodb://localhost:27017/chess-app
+JWT_SECRET=замени-с-дълъг-random-string
+GOOGLE_CLIENT_ID=твоят-google-oauth-client-id.apps.googleusercontent.com
 ```
 
-Never commit `.env` to git — it is already listed in `.gitignore`.
+| Променлива | Описание |
+|------------|----------|
+| `PORT` | HTTP порт |
+| `MONGO_URI` | Connection string към MongoDB |
+| `JWT_SECRET` | Секрет за JWT подписи (използва се и от Socket.IO middleware) |
+| `GOOGLE_CLIENT_ID` | Google OAuth Client ID (за `/api/auth/google`) |
 
-## Folder structure
+`.env` файлът е в `.gitignore` — никога не го commit-вай.
+
+## Структура на папките
 
 ```
 /server
   /src
     /config
-      db.ts             # Mongoose connection
+      db.ts                      Mongoose connect
     /middleware
-      auth.ts           # JWT verification middleware
-      errorHandler.ts   # Global error handler
-    /models             # Mongoose schemas
-      User.ts           # P1
-      Game.ts           # P2
-    /routes             # Express routers
-      auth.routes.ts    # P1 — /auth/*
-      game.routes.ts    # P2, P4, P5 — /games/*
-      user.routes.ts    # P4 — /users/*
-    /socket             # Socket.IO event handlers
-      gameSocket.ts     # P3 — move events
-      spectatorSocket.ts  # P5 — spectator room join
+      auth.ts                    requireAuth (JWT verify + blacklist check)
+      asyncHandler.ts            обвива async controllers
+      errorHandler.ts            централизиран error handler
+    /models
+      User.ts                    P1 — потребител (ELO, peakElo, статистики)
+      Game.ts                    P2 + P3 — партия (FEN, PGN, draw offer, spectatorToken)
+      Message.ts                 P3 — чат съобщения
+      BlacklistedToken.ts        P1 — TTL колекция за invalidated JWT
+    /routes
+      auth.routes.ts             P1 — /api/auth/*
+      game.routes.ts             P2 + P3 + P5 — /api/games/*
+      user.routes.ts             P4 — /api/users/*
+    /controllers
+      auth.controller.ts         register / login / google / logout / getCurrentUser
+      game.controller.ts         createGame / listWaitingGames / getCurrentGames /
+                                  getGameById / joinGame / cancelGame
+      game.helpers.ts            shared logic
+      user.controller.ts         leaderboard / profile / games / update*
+      spectator.controller.ts    getSpectateGame (по UUID токен)
+    /socket
+      io.ts                      Socket.IO bootstrap + auth middleware
+      gameSocket.ts              P3 — move / resign / draw събития
+      chatSocket.ts              P3 — chat send / history
+      spectatorSocket.ts         P5 — spectator join / leave
+      safeHandler.ts             обвива async socket handlers
     /services
-      eloService.ts     # P4 — Elo calculation
-      gameService.ts    # P3 — game state helpers
-    /types              # Re-exports from ../../shared/types.ts
-    index.ts            # Entry point — sets up Express + Socket.IO + DB
+      eloService.ts              P4 — ELO калкулация (K=32, MIN=100)
+      tokenBlacklist.service.ts  P1 — SHA-256 hash + TTL insert
+    /utils
+      jwt.ts                     signToken / verifyToken
+      password.ts                hashPassword / comparePassword (bcrypt)
+      google.ts                  verifyGoogleAccessToken
+    index.ts                     Express + Socket.IO + DB bootstrap
   tsconfig.json
-  .env
+  .env.example
 ```
 
 ## REST API
 
-### Auth (P1)
+Всички защитени endpoint-и изискват `Authorization: Bearer <jwt>` header.
+Унифициран response: `{ success: true, data }` или `{ success: false, message }`.
 
-| Method | Path | Auth required | Description |
-|---|---|---|---|
-| POST | `/auth/register` | No | Create account |
-| POST | `/auth/login` | No | Returns JWT |
-| GET | `/auth/me` | Yes | Current user info |
+### Authentication (P1)
 
-### Games (P2, P3, P4, P5)
+| Метод | Път | Auth | Описание |
+|-------|-----|------|----------|
+| `POST` | `/api/auth/register` | публичен | Регистрация на нов потребител |
+| `POST` | `/api/auth/login` | публичен | Login с username/email + парола |
+| `POST` | `/api/auth/google` | публичен | Login през Google OAuth access token |
+| `POST` | `/api/auth/logout` | ✅ | Добавя JWT в blacklist |
+| `GET`  | `/api/auth/me` | ✅ | Връща актуалния потребител |
 
-| Method | Path | Auth required | Description |
-|---|---|---|---|
-| POST | `/games` | Yes | Create a new game, returns game ID + spectator token |
-| POST | `/games/:id/join` | Yes | Join as the second player |
-| GET | `/games/:id` | No | Get game state (used for replay) |
-| GET | `/games/spectate/:token` | No | Get game by spectator token |
+### Games (P2 + P3 + P5)
+
+| Метод | Път | Auth | Описание |
+|-------|-----|------|----------|
+| `POST`   | `/api/games` | ✅ | Създава партия (статус `waiting`) |
+| `GET`    | `/api/games/waiting` | ✅ | Списък на чакащите партии |
+| `GET`    | `/api/games/me/current` | ✅ | Моите активни/чакащи партии |
+| `GET`    | `/api/games/:id` | ✅ | Зарежда конкретна партия |
+| `POST`   | `/api/games/:id/join` | ✅ | Присъединяване към waiting партия |
+| `DELETE` | `/api/games/:id` | ✅ | Отказва waiting партия (само създателят) |
+| `GET`    | `/api/games/spectate/:token` | публичен | Резолвва spectator UUID токен (P5) |
 
 ### Users (P4)
 
-| Method | Path | Auth required | Description |
-|---|---|---|---|
-| GET | `/users/:username/stats` | No | Wins, losses, draws, Elo |
-| GET | `/users/:username/games` | No | Paginated game history |
-| GET | `/leaderboard` | No | Top 10 players by Elo |
+| Метод | Път | Auth | Описание |
+|-------|-----|------|----------|
+| `GET`   | `/api/users/leaderboard` | ✅ | Top N играчи по ELO |
+| `GET`   | `/api/users/:id` | ✅ | Профил с агрегирана статистика |
+| `GET`   | `/api/users/:id/games` | ✅ | История на партиите |
+| `PATCH` | `/api/users/:id` | ✅ | Обновява username |
+| `PATCH` | `/api/users/:id/password` | ✅ | Обновява парола |
 
-## Socket.IO events
+### Health
 
-The server uses rooms. Each game has two rooms:
-- `game:{id}` — joined by the two players
-- `spectate:{token}` — joined by spectators (read-only)
+| Метод | Път | Описание |
+|-------|-----|----------|
+| `GET` | `/api/health` | Liveness probe — `{ status: 'ok' }` |
 
-### Events the server listens for
+## Socket.IO
 
-| Event | Payload | Description |
-|---|---|---|
-| `game:join` | `{ gameId, token }` | Player joins their game room |
-| `spectator:join` | `{ spectatorToken }` | Spectator joins a watch room |
-| `move:make` | `{ gameId, move }` | Player submits a move |
+Сървърът използва три типа стаи:
 
-### Events the server emits
+- `user:{userId}` — всеки автентикиран сокет автоматично join-ва тук (за персонални нотификации).
+- `game:{gameId}` — двамата играчи в партията.
+- `spectate:{spectatorToken}` — наблюдателите (без авторизация).
 
-| Event | Payload | Sent to |
-|---|---|---|
-| `game:start` | `{ game }` | Both players when second joins |
-| `move:update` | `{ fen, pgn, turn, lastMove }` | Game room + spectator room |
-| `game:over` | `{ winner, reason }` | Game room + spectator room |
-
-## Database models
-
-### User
+`MOVE_UPDATE` и `GAME_OVER` се излъчват едновременно към `game:` и `spectate:` стаите чрез:
 
 ```ts
+getIO()
+  .to(`game:${game._id}`)
+  .to(`spectate:${game.spectatorToken}`)
+  .emit(SocketEvents.MOVE_UPDATE, update);
+```
+
+### Събития, които сървърът слуша (client → server)
+
+| Събитие | Payload | Описание |
+|---------|---------|----------|
+| `game:join` | `gameId: string` | Играч се присъединява към `game:{id}` |
+| `game:leave` | `gameId: string` | Излиза от `game:{id}` |
+| `move:make` | `MovePayload` | Предложение за ход |
+| `game:resign` | `gameId: string` | Предаване |
+| `draw:offer` | `gameId: string` | Предложение за реми |
+| `draw:accept` | `gameId: string` | Приема reми |
+| `draw:decline` | `gameId: string` | Отказва реми |
+| `chat:send` | `ChatSendPayload` | Изпраща чат съобщение |
+| `spectator:join` | `spectatorToken: string` | Наблюдател join-ва `spectate:{token}` |
+| `spectator:leave` | `spectatorToken: string` | Наблюдател напуска |
+
+### Събития, които сървърът излъчва (server → client)
+
+| Събитие | Получател | Описание |
+|---------|-----------|----------|
+| `game:start` | `user:{whiteId}` + `user:{blackId}` | При join от втория играч |
+| `move:update` | `game:{id}` + `spectate:{token}` | Валиден ход — новата позиция |
+| `move:error` | изпращача | Невалиден ход |
+| `game:over` | `game:{id}` + `spectate:{token}` | Край на партията |
+| `draw:offer` | опонентът | Получено предложение за реми |
+| `draw:declined` | предложителя | Опонентът отказа |
+| `chat:receive` | `game:{id}` | Ново чат съобщение |
+| `chat:history` | новоприсъединилия се | Историята при `game:join` |
+| `lobby:changed` | всички автентикирани | Лобито трябва да се рефрешне |
+
+## Модели на данните
+
+Подробен преглед — виж главния [`DOCUMENTATION.md`](../DOCUMENTATION.md#8-модели-на-данните) или директно [`src/models/`](src/models/).
+
+### User
+```ts
 {
-  username: string        // unique
-  email: string           // unique
-  passwordHash: string
-  elo: number             // default: 1000
+  username: string         // unique, trimmed
+  email: string            // unique, lowercase
+  passwordHash?: string    // select: false; липсва за Google-only акаунти
+  googleId?: string        // unique, sparse
+  elo: number              // default 1200, indexed
+  peakElo: number          // default 1200
+  wins: number, losses: number, draws: number
   createdAt: Date
 }
 ```
 
 ### Game
-
 ```ts
 {
-  whitePlayer: ObjectId   // ref: User
-  blackPlayer: ObjectId   // ref: User (null until someone joins)
+  whitePlayer: ObjectId       // ref User, required
+  blackPlayer: ObjectId | null
   status: 'waiting' | 'active' | 'finished'
-  fen: string             // current board state
-  pgn: string             // full move history
-  winner: ObjectId | null // ref: User, null for draws
   result: 'white' | 'black' | 'draw' | null
-  spectatorToken: string  // UUID, generated on game creation
+  winner: ObjectId | null
+  fen: string                 // current FEN
+  pgn: string                 // full move history
+  spectatorToken: string      // UUID v4, unique
+  drawOffer: { from: ObjectId } | null
   createdAt: Date
   finishedAt: Date | null
+  endReason: 'checkmate' | 'resignation' | 'stalemate' | ... | null
 }
 ```
 
-## Feature ownership
+### Message
+```ts
+{
+  gameId: ObjectId   // ref Game, indexed
+  userId: ObjectId   // ref User
+  username: string   // денормализирано
+  text: string       // maxlen 200
+  createdAt: Date
+}
+```
 
-| Person | Files |
-|---|---|
-| P1 | `models/User.ts`, `routes/auth.routes.ts`, `middleware/auth.ts` |
-| P2 | `models/Game.ts`, `routes/game.routes.ts` (create/join endpoints) |
-| P3 | `socket/gameSocket.ts`, `services/gameService.ts` |
-| P4 | `routes/user.routes.ts`, `services/eloService.ts` |
-| P5 | `socket/spectatorSocket.ts`, `routes/game.routes.ts` (spectate endpoint) |
+### BlacklistedToken
+```ts
+{
+  tokenHash: string  // SHA-256 hash на JWT
+  expiresAt: Date    // TTL индекс (expires: 0) — auto cleanup
+}
+```
 
-## Scripts
+## Разпределение по екипа
+
+| # | Файлове |
+|---|---------|
+| **P1** | `models/User.ts`, `models/BlacklistedToken.ts`, `routes/auth.routes.ts`, `controllers/auth.controller.ts`, `middleware/auth.ts`, `services/tokenBlacklist.service.ts`, `utils/{jwt,password,google}.ts` |
+| **P2** | `routes/game.routes.ts` (create/join/cancel/list/current), `controllers/game.controller.ts`, `controllers/game.helpers.ts` |
+| **P3** | `models/Game.ts`, `models/Message.ts`, `socket/gameSocket.ts`, `socket/chatSocket.ts` |
+| **P4** | `routes/user.routes.ts`, `controllers/user.controller.ts`, `services/eloService.ts` |
+| **P5** | `controllers/spectator.controller.ts`, `socket/spectatorSocket.ts`, `routes/game.routes.ts` (spectate endpoint) |
+
+## Команди
 
 ```bash
-npm run dev        # Start with ts-node-dev (hot reload)
-npm run build      # Compile TypeScript → /dist
-npm run start      # Run compiled /dist/index.js (production)
-npm run typecheck  # tsc without emitting
+npm run dev       # старт с ts-node-dev (hot reload)
+npm run build     # TypeScript compile → /dist
+npm start         # старт на компилирания /dist (production)
 ```
 
-## Auth middleware
+## Защита на route-овете
 
-Protect any route by adding the `auth` middleware:
+За защитен endpoint добави `requireAuth` middleware:
 
 ```ts
-import { auth } from '../middleware/auth';
+import { requireAuth } from '../middleware/auth';
+import { asyncHandler } from '../middleware/asyncHandler';
 
-router.get('/protected', auth, (req, res) => {
-  // req.user is the decoded JWT payload: { id, username }
-  res.json({ user: req.user });
-});
+router.get('/protected', requireAuth, asyncHandler(async (req, res) => {
+  // req.user е JWT payload: { userId, exp, iat }
+  res.json({ success: true, data: { userId: req.user!.userId } });
+}));
 ```
 
-## Notes for the team
+## Бележки за екипа
 
-- Import shared types from `../../shared/types.ts` — the `Move`, `GameStatus`, and `SocketEvents` interfaces live there.
-- Move validation must always happen server-side using `chess.js`. Never trust the client's move.
-- When a game ends, P3's socket handler calls P4's `eloService.updateElo(winnerId, loserId)` — this is the main integration point between those two features.
-- Spectator rooms receive the same `move:update` broadcasts as the player room — P3 emits to both rooms on every move.
+- Импортирай общи типове от `../../shared/types.ts` — `Move`, `GameStatus`, `SocketEvents` и payload интерфейсите са там.
+- **Никога не доверявай хода на клиента.** Винаги преисъздавай `Chess` от записания PGN/FEN и валидирай със сървърен `chess.js`.
+- Когато партията завърши, gameSocket вика `eloService.updateElo(white, black, result)` — това е интеграционната точка между P3 и P4.
+- Spectator стаите получават огледално копие на `MOVE_UPDATE` / `GAME_OVER` — emit-ва се едновременно към `game:` и `spectate:`.
+- `BlacklistedToken` чисти сам остарелите записи чрез TTL индекс — няма нужда от cron.

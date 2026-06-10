@@ -17,26 +17,7 @@ import { Game, GameStatus, MovePayload } from '../../shared/types';
 **From the client:**
 
 ```ts
-import { User, SocketEvents, GameResult } from '../../shared/types';
-```
-
-If the relative path feels noisy, add a path alias in each `tsconfig.json`:
-
-```json
-// in client/tsconfig.json and server/tsconfig.json
-{
-  "compilerOptions": {
-    "paths": {
-      "@shared/*": ["../shared/*"]
-    }
-  }
-}
-```
-
-Then import as:
-
-```ts
-import { User } from '@shared/types';
+import { User, SocketEvents, GameResult } from '../../../shared/types';
 ```
 
 ## File structure
@@ -47,13 +28,13 @@ import { User } from '@shared/types';
   README.md
 ```
 
-## Contents of types.ts
+## Contents of `types.ts`
 
-Below is the full reference for every type defined in this package.
+Below is the full reference for every type defined in this package. Match the names exactly — the file is the source of truth, this README is a summary.
 
 ---
 
-### User
+### User & auth
 
 ```ts
 export interface User {
@@ -61,11 +42,37 @@ export interface User {
   username: string;
   email: string;
   elo: number;
+  peakElo: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  createdAt: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  data: { user: User; token: string };
+}
+
+export interface PublicUser {
+  _id: string;
+  username: string;
+  elo: number;
+}
+
+export interface UserStats {
+  _id: string;
+  username: string;
+  elo: number;
+  peakElo: number;
+  wins: number;
+  losses: number;
+  draws: number;
   createdAt: string;
 }
 ```
 
-Used by: auth pages (P1), profile/leaderboard (P4), game display (P3).
+Used by: auth pages (P1), profile and leaderboard (P4), public listings (P2, P3).
 
 ---
 
@@ -73,20 +80,22 @@ Used by: auth pages (P1), profile/leaderboard (P4), game display (P3).
 
 ```ts
 export type GameStatus = 'waiting' | 'active' | 'finished';
-export type GameResult = 'white' | 'black' | 'draw' | null;
+export type GameResult = 'white' | 'black' | 'draw';
 
 export interface Game {
   _id: string;
-  whitePlayer: User;
-  blackPlayer: User | null;
+  whitePlayer: PublicUser;
+  blackPlayer: PublicUser | null;
   status: GameStatus;
+  result: GameResult | null;
+  winner: PublicUser | null;
   fen: string;
   pgn: string;
-  winner: User | null;
-  result: GameResult;
   spectatorToken: string;
+  drawOffer: { from: string } | null;
   createdAt: string;
   finishedAt: string | null;
+  endReason: GameOverPayload['reason'] | null;
 }
 ```
 
@@ -129,11 +138,56 @@ export interface MoveUpdatePayload {
 export interface GameOverPayload {
   gameId: string;
   winner: 'white' | 'black' | 'draw';
-  reason: 'checkmate' | 'resignation' | 'stalemate' | ...;
+  reason:
+    | 'checkmate'
+    | 'resignation'
+    | 'stalemate'
+    | 'insufficient_material'
+    | 'threefold_repetition'
+    | 'fifty_move_rule'
+    | 'agreement'
+    | 'abandonment';
 }
 
-export interface GameStartPayload {
-  game: Game;
+export interface MoveErrorPayload {
+  gameId: string;
+  message: string;
+}
+
+export interface DrawOfferPayload {
+  gameId: string;
+  from: 'white' | 'black';
+}
+
+export interface DrawDeclinedPayload {
+  gameId: string;
+}
+```
+
+---
+
+### Chat
+
+```ts
+export const MAX_CHAT_MESSAGE_LENGTH = 200;
+
+export interface ChatSendPayload {
+  gameId: string;
+  text: string;
+}
+
+export interface ChatMessagePayload {
+  id: string;
+  gameId: string;
+  userId: string;
+  username: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface ChatHistoryPayload {
+  gameId: string;
+  messages: ChatMessagePayload[];
 }
 ```
 
@@ -141,7 +195,7 @@ export interface GameStartPayload {
 
 ### Socket event names
 
-Centralising event name strings as a const enum prevents typos across the codebase.
+Centralising event name strings as a const prevents typos across the codebase.
 
 ```ts
 export const SocketEvents = {
@@ -149,10 +203,20 @@ export const SocketEvents = {
   GAME_LEAVE:      'game:leave',
   GAME_START:      'game:start',
   GAME_OVER:       'game:over',
+  GAME_RESIGN:     'game:resign',
   MOVE_MAKE:       'move:make',
   MOVE_UPDATE:     'move:update',
+  MOVE_ERROR:      'move:error',
+  DRAW_OFFER:      'draw:offer',
+  DRAW_ACCEPT:     'draw:accept',
+  DRAW_DECLINE:    'draw:decline',
+  DRAW_DECLINED:   'draw:declined',
   SPECTATOR_JOIN:  'spectator:join',
   SPECTATOR_LEAVE: 'spectator:leave',
+  CHAT_SEND:       'chat:send',
+  CHAT_RECEIVE:    'chat:receive',
+  CHAT_HISTORY:    'chat:history',
+  LOBBY_CHANGED:   'lobby:changed',
 } as const;
 
 export type SocketEvent = typeof SocketEvents[keyof typeof SocketEvents];
@@ -176,44 +240,9 @@ socket.on(SocketEvents.MOVE_UPDATE, (data: MoveUpdatePayload) => {
 
 ---
 
-### API response wrapper
-
-A consistent shape for all REST responses.
-
-```ts
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-}
-
-export interface ApiError {
-  success: false;
-  message: string;
-  errors?: Record<string, string>;
-}
-```
-
----
-
-### Stats
-
-```ts
-export interface UserStats {
-  username: string;
-  elo: number;
-  wins: number;
-  losses: number;
-  draws: number;
-  totalGames: number;
-}
-```
-
-Used by: profile and leaderboard pages (P4).
-
-## Rules for editing this file
+## Rules for editing `types.ts`
 
 1. **Discuss before adding.** Any new type added here affects both the client and server. Check with the team before committing.
-2. **Never add business logic.** This file is types only — no functions, no classes, no imports from node_modules.
-3. **Keep it flat.** One file is intentional. If it gets very long, split into `user.types.ts`, `game.types.ts`, etc. — but only once the file exceeds ~200 lines.
+2. **Never add business logic.** This file is types only — no functions, no classes, no imports from `node_modules`.
+3. **Keep it flat.** One file is intentional. If it gets very long, split into `user.types.ts`, `game.types.ts`, etc. — but only once the file exceeds ~300 lines.
 4. **Bump both sides.** When you change an existing interface, update all usages in both `/client` and `/server` before pushing.
