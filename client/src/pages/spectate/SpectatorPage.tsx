@@ -5,6 +5,7 @@ import api from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { SocketEvents } from '../../../../shared/types';
 import type { Game, MoveUpdatePayload, GameOverPayload } from '../../../../shared/types';
+import { REASON_COPY, winnerNameFor } from '../game/game.utils';
 import styles from './SpectatorPage.module.css';
 
 export default function SpectatorPage() {
@@ -122,11 +123,9 @@ export default function SpectatorPage() {
         {result && (
           <div className={styles.resultOverlay}>
             <p className={styles.resultText}>
-              {result.winner === 'draw'
-                ? 'Draw'
-                : `${result.winner === 'white' ? game.whitePlayer.username : game.blackPlayer?.username} wins`}
+              {result.winner === 'draw' ? 'Draw' : `${winnerNameFor(game, result)} wins`}
             </p>
-            <p className={styles.resultReason}>{result.reason}</p>
+            <p className={styles.resultReason}>{REASON_COPY[result.reason]}</p>
           </div>
         )}
         <Chessboard
