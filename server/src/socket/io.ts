@@ -1,6 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from '../utils/jwt';
+import { isBlacklisted } from '../utils/tokenBlacklist';
 import { registerSpectatorHandlers } from './spectatorSocket';
 import { registerGameHandlers } from './gameSocket';
 import { registerChatHandlers } from './chatSocket';
@@ -18,7 +19,7 @@ export const initIO = (httpServer: HttpServer): Server => {
     cors: { origin: ['http://localhost:5173', 'http://localhost:5174'] },
   });
 
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) {
       next();
@@ -26,6 +27,10 @@ export const initIO = (httpServer: HttpServer): Server => {
     }
     try {
       const payload = verifyToken(token);
+      if (await isBlacklisted(token)) {
+        next(new Error('Token has been invalidated'));
+        return;
+      }
       socket.data.userId = payload.userId;
       next();
     } catch {

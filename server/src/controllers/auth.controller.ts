@@ -4,9 +4,33 @@ import { hashPassword, comparePassword } from '../utils/password';
 import { signToken } from '../utils/jwt';
 import { verifyGoogleAccessToken } from '../utils/google';
 import { blacklistToken } from '../utils/tokenBlacklist';
+import { getIO } from '../socket/io';
 
 const isDuplicateKeyError = (err: unknown): boolean =>
   typeof err === 'object' && err !== null && 'code' in err && (err as { code: number }).code === 11000;
+
+const USERNAME_MAX_LENGTH = 24;
+const USERNAME_PATTERN = /^[a-zA-Z0-9._-]{3,24}$/;
+const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
+const PASSWORD_MAX_LENGTH = 72;
+
+const usernameBaseFromEmail = (email: string): string => {
+  const base = email
+    .split('@')[0]
+    .replace(/[^a-zA-Z0-9._-]/g, '')
+    .slice(0, USERNAME_MAX_LENGTH);
+  return base.length >= 3 ? base : `player${base}`.slice(0, USERNAME_MAX_LENGTH);
+};
+
+const generateUniqueUsername = async (email: string): Promise<string> => {
+  const base = usernameBaseFromEmail(email);
+  let candidate = base;
+  for (let suffix = 2; await User.exists({ username: candidate }); suffix++) {
+    const tail = String(suffix);
+    candidate = base.slice(0, USERNAME_MAX_LENGTH - tail.length) + tail;
+  }
+  return candidate;
+};
 
 const toPublicUser = (user: InstanceType<typeof User>) => ({
   _id:       user._id.toString(),
@@ -21,15 +45,32 @@ const toPublicUser = (user: InstanceType<typeof User>) => ({
 });
 
 export async function register(req: Request, res: Response) {
-  const { username, email, password } = req.body;
+  const { username, email, password } = req.body ?? {};
 
-  if (!username || !email || !password) {
+  if (typeof username !== 'string' || typeof email !== 'string' || typeof password !== 'string'
+      || !username || !email || !password) {
     res.status(400).json({ success: false, message: 'username, email and password are required' });
     return;
   }
 
-  if (password.length < 6) {
-    res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+  if (!USERNAME_PATTERN.test(username)) {
+    res.status(400).json({
+      success: false,
+      message: 'Username must be 3-24 characters using only letters, digits, ".", "_" or "-"',
+    });
+    return;
+  }
+
+  if (!EMAIL_PATTERN.test(email)) {
+    res.status(400).json({ success: false, message: 'Please enter a valid email address' });
+    return;
+  }
+
+  if (password.length < 6 || password.length > PASSWORD_MAX_LENGTH) {
+    res.status(400).json({
+      success: false,
+      message: `Password must be between 6 and ${PASSWORD_MAX_LENGTH} characters`,
+    });
     return;
   }
 
@@ -48,7 +89,6 @@ export async function register(req: Request, res: Response) {
 
     res.status(201).json({ success: true, data: { user: toPublicUser(user), token } });
   } catch (err: unknown) {
-    // Duplicate key error from a race between concurrent registrations
     if (isDuplicateKeyError(err)) {
       res.status(409).json({ success: false, message: 'That email or username is already taken' });
       return;
@@ -58,9 +98,9 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
-  const { identifier, password } = req.body;
+  const { identifier, password } = req.body ?? {};
 
-  if (!identifier || !password) {
+  if (typeof identifier !== 'string' || typeof password !== 'string' || !identifier || !password) {
     res.status(400).json({ success: false, message: 'identifier and password are required' });
     return;
   }
@@ -82,9 +122,9 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function googleLogin(req: Request, res: Response) {
-  const { accessToken } = req.body;
+  const { accessToken } = req.body ?? {};
 
-  if (!accessToken) {
+  if (typeof accessToken !== 'string' || !accessToken) {
     res.status(400).json({ success: false, message: 'accessToken is required' });
     return;
   }
@@ -102,26 +142,30 @@ export async function googleLogin(req: Request, res: Response) {
     return;
   }
 
-  // Account linking: reuse the existing account when the email already exists.
-  let user = await User.findOne({ email: profile.email });
+  let user = await User.findOne({ googleId: profile.googleId });
 
   if (!user) {
+    user = await User.findOne({ email: profile.email });
+  }
+
+  for (let attempt = 0; !user && attempt < 3; attempt++) {
     try {
       user = await User.create({
-        username: profile.email,
+        username: await generateUniqueUsername(profile.email),
         email: profile.email,
         googleId: profile.googleId,
       });
     } catch (err: unknown) {
-      // Lost a race with a concurrent first-time Google login for the same email.
-      if (isDuplicateKeyError(err)) {
-        user = await User.findOne({ email: profile.email });
-      }
-      if (!user) throw err;
+      if (!isDuplicateKeyError(err)) throw err;
+      user = await User.findOne({ email: profile.email });
+      if (!user && attempt === 2) throw err;
     }
   }
+  if (!user) {
+    res.status(500).json({ success: false, message: 'Could not create account' });
+    return;
+  }
 
-  // Link Google to a pre-existing email/password account on first Google sign-in.
   if (!user.googleId) {
     user.googleId = profile.googleId;
     await user.save();
@@ -135,6 +179,7 @@ export async function logout(req: Request, res: Response) {
   const token = req.headers.authorization!.match(/^Bearer\s+(\S+)$/i)![1];
   const expiresAt = new Date(req.user!.exp * 1000);
   await blacklistToken(token, expiresAt);
+  getIO().in(`user:${req.user!.userId}`).disconnectSockets(true);
   res.json({ success: true, message: 'Logged out' });
 }
 
