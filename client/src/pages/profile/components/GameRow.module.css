@@ -1,0 +1,138 @@
+.row {
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-6) var(--s-4);
+  border-bottom: 1px solid var(--rule);
+  transition: all var(--t-fast) var(--ease);
+  border-radius: 8px;
+}
+
+.row:hover {
+  background: rgba(15, 13, 8, 0.03);
+  transform: translateX(4px);
+}
+
+.rowGrid {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-8);
+}
+
+.rowNumber {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  color: var(--ash);
+  min-width: 2.5em;
+}
+
+.rowMeta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rowOpp {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.colorBadge {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.oppElo {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  color: var(--ash);
+  letter-spacing: 0.02em;
+}
+
+.rowDetails {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  color: var(--ash);
+  margin: 0;
+}
+
+.outcome {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 3px var(--s-3);
+  border-radius: 9999px;
+  border: 1px solid currentColor;
+}
+
+.outcome_win { color: var(--oxblood); border-color: var(--oxblood); }
+.outcome_loss { color: var(--ash); border-color: var(--rule); }
+.outcome_draw { color: var(--ink-soft); border-color: var(--rule); }
+
+.dot {
+  color: var(--ash-soft);
+}
+
+.reason {
+  font-style: italic;
+}
+
+.rowAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s-2);
+}
+
+.rowDate {
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  font-style: italic;
+  color: var(--ash);
+}
+
+.reviewBtn {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--ink);
+  padding: 0 0 2px;
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.reviewBtn:hover {
+  color: var(--oxblood);
+  border-bottom-color: var(--oxblood);
+}
+
+@media (max-width: 880px) {
+  .rowGrid {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: var(--s-3) var(--s-4);
+  }
+  .rowAction {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+}

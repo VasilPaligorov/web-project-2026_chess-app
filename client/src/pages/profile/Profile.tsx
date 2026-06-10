@@ -1,79 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import axios from 'axios';
-import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
-import type { Game, UserStats } from '../../../../shared/types';
-import { ReplayViewer } from './components/ReplayViewer';
+import { ProfileHero } from './components/ProfileHero';
+import { StatsGrid } from './components/StatsGrid';
+import { GameRow } from './components/GameRow';
+import { EditProfileModal } from './components/EditProfileModal';
+import { useProfile } from './useProfile';
 import styles from './Profile.module.css';
-
-interface UserResponse {
-  success: boolean;
-  data: UserStats;
-}
-interface GamesResponse {
-  success: boolean;
-  data: Game[];
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-function formatMonth(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-  });
-}
-
-function pct(wins: number, total: number): string {
-  if (total === 0) return '—';
-  return `${Math.round((wins / total) * 100)}%`;
-}
 
 export default function Profile() {
   const { userId } = useParams<{ userId: string }>();
   const me = useAuthStore((s) => s.user);
+  const setMe = useAuthStore((s) => s.setUser);
 
-  const [user, setUser] = useState<UserStats | null>(null);
-  const [games, setGames] = useState<Game[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { user, games, error, patchUser } = useProfile(userId);
   const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    setError(null);
-    setUser(null);
-    setGames(null);
-
-    Promise.all([
-      api.get<UserResponse>(`/api/users/${userId}`),
-      api.get<GamesResponse>(`/api/users/${userId}/games?limit=10`),
-    ])
-      .then(([u, g]) => {
-        if (cancelled) return;
-        if (u.data.success) setUser(u.data.data);
-        if (g.data.success) setGames(g.data.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (axios.isAxiosError(err) && err.response?.status === 404) {
-          setError('Player not found');
-        } else {
-          setError('Could not load profile');
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+  const [editOpen, setEditOpen] = useState(false);
 
   if (error) {
     return (
@@ -97,35 +39,23 @@ export default function Profile() {
     );
   }
 
-  const total = user.wins + user.losses + user.draws;
   const isMe = me?._id === user._id;
+
+  const handleUsernameUpdated = (newUsername: string) => {
+    patchUser({ username: newUsername });
+    if (me && me._id === user._id) {
+      setMe({ ...me, username: newUsername });
+    }
+  };
 
   return (
     <div className={styles.page}>
-      <header className={styles.hero}>
-        <p className={styles.eyebrow}>
-          Folio Nº IV · {isMe ? 'You' : 'Player'}
-        </p>
-        <h1 className={styles.name}>
-          {user.username}
-          {isMe && <span className={styles.youTag}>You</span>}
-        </h1>
-        <p className={styles.heroMeta}>
-          <span className={`${styles.heroElo} tnum`}>{user.elo}</span>
-          <span className={styles.heroEloLabel}>elo</span>
-          <span className={styles.dot}>·</span>
-          <span className={styles.joined}>joined {formatMonth(user.createdAt)}</span>
-        </p>
-      </header>
-
-      <section className={styles.statsGrid}>
-        <Stat label="Wins" value={user.wins} accent="oxblood" />
-        <Stat label="Losses" value={user.losses} />
-        <Stat label="Draws" value={user.draws} />
-        <Stat label="Win rate" value={pct(user.wins, total)} />
-        <Stat label="Peak" value={user.peakElo} />
-        <Stat label="Total" value={total} />
-      </section>
+      <ProfileHero
+        user={user}
+        isMe={isMe}
+        onEdit={isMe ? () => setEditOpen(true) : undefined}
+      />
+      <StatsGrid user={user} />
 
       <section className={styles.list}>
         <header className={styles.listHeader}>
@@ -146,96 +76,30 @@ export default function Profile() {
 
         {games && games.length > 0 && (
           <ul className={styles.rows}>
-            {games.map((g, i) => {
-              const myColor: 'white' | 'black' =
-                g.whitePlayer._id === user._id ? 'white' : 'black';
-              const opponent = myColor === 'white' ? g.blackPlayer : g.whitePlayer;
-              const outcome =
-                g.result === 'draw'
-                  ? 'draw'
-                  : g.result === myColor
-                    ? 'win'
-                    : 'loss';
-              const isExpanded = expandedGameId === g._id;
-              return (
-                <li key={g._id} className={styles.row}>
-                  <div className={styles.rowGrid}>
-                    <span className={`${styles.rowNumber} tnum`}>
-                      {(i + 1).toString().padStart(2, '0')}.
-                    </span>
-                    <div className={styles.rowMeta}>
-                      <p className={styles.rowOpp}>
-                        <span className={styles.colorBadge}>{myColor === 'white' ? '♔' : '♚'}</span>
-                        vs {opponent?.username ?? '—'}
-                        {opponent && (
-                          <span className={`${styles.oppElo} tnum`}>{opponent.elo}</span>
-                        )}
-                      </p>
-                      <p className={styles.rowDetails}>
-                        <span className={`${styles.outcome} ${styles[`outcome_${outcome}`]}`}>
-                          {outcome.toUpperCase()}
-                        </span>
-                        {g.endReason && (
-                          <>
-                            <span className={styles.dot}>·</span>
-                            <span className={styles.reason}>
-                              {g.endReason.replace(/_/g, ' ')}
-                            </span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-                    <div className={styles.rowAction}>
-                      <span className={styles.rowDate}>
-                        {g.finishedAt ? formatDate(g.finishedAt) : ''}
-                      </span>
-                      <button
-                        type="button"
-                        className={styles.reviewBtn}
-                        onClick={() => setExpandedGameId(isExpanded ? null : g._id)}
-                        aria-expanded={isExpanded}
-                        aria-controls={`replay-${g._id}`}
-                      >
-                        {isExpanded ? 'Close replay' : 'Open replay →'}
-                      </button>
-                    </div>
-                  </div>
-                  {isExpanded && (
-                    <div id={`replay-${g._id}`}>
-                      <ReplayViewer
-                        game={g}
-                        viewerColor={myColor}
-                        onClose={() => setExpandedGameId(null)}
-                      />
-                    </div>
-                  )}
-                </li>
-              );
-            })}
+            {games.map((g, i) => (
+              <GameRow
+                key={g._id}
+                game={g}
+                index={i}
+                viewerId={user._id}
+                isExpanded={expandedGameId === g._id}
+                onToggle={() =>
+                  setExpandedGameId(expandedGameId === g._id ? null : g._id)
+                }
+              />
+            ))}
           </ul>
         )}
       </section>
-    </div>
-  );
-}
 
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number | string;
-  accent?: 'oxblood';
-}) {
-  return (
-    <div className={styles.stat}>
-      <p className={styles.statLabel}>{label}</p>
-      <p
-        className={`${styles.statValue} tnum ${accent === 'oxblood' ? styles.statValueAccent : ''}`}
-      >
-        {value}
-      </p>
+      {editOpen && isMe && (
+        <EditProfileModal
+          userId={user._id}
+          currentUsername={user.username}
+          onUsernameUpdated={handleUsernameUpdated}
+          onClose={() => setEditOpen(false)}
+        />
+      )}
     </div>
   );
 }

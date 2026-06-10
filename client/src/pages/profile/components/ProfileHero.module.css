@@ -1,0 +1,109 @@
+.hero {
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--s-10);
+  position: relative;
+  animation: rise 600ms var(--ease) backwards;
+}
+
+.editBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: var(--s-2) var(--s-4);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.editBtn:hover {
+  border-color: var(--ink);
+  background: var(--paper-deep);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  background: var(--rule-soft);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash);
+  margin: 0 0 var(--s-4);
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 7vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.022em;
+  color: var(--ink);
+  margin: 0 0 var(--s-5);
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.youTag {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--oxblood);
+  border: 1px solid var(--oxblood);
+  padding: 4px var(--s-3);
+  border-radius: 4px;
+  align-self: center;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-4);
+  font-family: var(--font-body);
+  color: var(--ash);
+}
+
+.heroElo {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  color: var(--oxblood);
+  font-style: italic;
+}
+
+.heroEloLabel {
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.dot {
+  color: var(--ash-soft);
+}
+
+.joined {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

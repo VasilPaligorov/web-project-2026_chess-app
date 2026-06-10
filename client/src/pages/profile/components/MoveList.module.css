@@ -1,0 +1,59 @@
+.empty {
+  font-family: var(--font-body);
+  font-size: var(--t-body-sm);
+  color: var(--ash);
+  margin: 0;
+  font-style: italic;
+}
+
+.moveList {
+  list-style: none;
+  padding: var(--s-2);
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  max-height: 480px;
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.moveRow {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 1fr;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.moveNum {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  color: var(--ash-soft);
+  text-align: right;
+  padding-right: var(--s-2);
+}
+
+.moveBtn {
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  text-align: left;
+  padding: 4px var(--s-3);
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.moveBtn:hover {
+  background: var(--paper-deep);
+}
+
+.moveBtnActive {
+  background: var(--oxblood-tint);
+  color: var(--oxblood);
+  border-color: var(--oxblood);
+}
