@@ -1,8 +1,8 @@
-### Архитектура — Head2Head Chess
+# Архитектура — Head2Head Chess
 
 Уеб приложение за шах в реално време: React SPA клиент, Express + Socket.IO сървър и MongoDB. Клиентът и сървърът споделят общи TypeScript типове през `shared/types.ts`.
 
-#### Обща архитектура
+## Обща архитектура
 
 ```mermaid
 flowchart LR
@@ -58,7 +58,7 @@ flowchart LR
   Server -.-> Shared
 ```
 
-#### Поток на един ход
+## Поток на един ход
 
 ```mermaid
 sequenceDiagram
@@ -86,7 +86,7 @@ sequenceDiagram
   end
 ```
 
-#### Автентикация
+## Автентикация
 
 ```mermaid
 sequenceDiagram
@@ -123,7 +123,7 @@ sequenceDiagram
   end
 ```
 
-#### REST API
+## REST API
 
 | Метод | Път | Auth | Описание |
 |---|---|---|---|
@@ -143,7 +143,7 @@ sequenceDiagram
 | GET | `/api/users/:id` | ✔ | профил |
 | GET | `/api/users/:id/games` | ✔ | история на игрите |
 
-#### Socket.IO събития
+## Socket.IO събития
 
 | Събитие | Посока | Описание |
 |---|---|---|
@@ -158,7 +158,7 @@ sequenceDiagram
 | `spectator:join` / `spectator:leave` | клиент → сървър | гледане по зрителски линк |
 | `lobby:changed` | сървър → всички | лобито се е променило (нова / заета / отказана игра) — клиентът презарежда списъка |
 
-#### Модели в базата
+## Модели в базата
 
 - **User** — username, email, passwordHash (bcrypt), googleId, elo / peakElo, wins / losses / draws
 - **Game** — whitePlayer / blackPlayer, статус (`waiting / active / finished`), fen, pgn (история на ходовете), result / winner / endReason, drawOffer, spectatorToken
