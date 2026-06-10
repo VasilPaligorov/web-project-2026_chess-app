@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, JwtPayload } from '../utils/jwt';
-import { isBlacklisted } from '../utils/tokenBlacklist';
+import { isBlacklisted } from '../services/tokenBlacklist.service';
 import { asyncHandler } from './asyncHandler';
 
 declare global {
