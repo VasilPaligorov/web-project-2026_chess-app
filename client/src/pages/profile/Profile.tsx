@@ -4,15 +4,18 @@ import { useAuthStore } from '../../store/authStore';
 import { ProfileHero } from './components/ProfileHero';
 import { StatsGrid } from './components/StatsGrid';
 import { GameRow } from './components/GameRow';
+import { EditProfileModal } from './components/EditProfileModal';
 import { useProfile } from './useProfile';
 import styles from './Profile.module.css';
 
 export default function Profile() {
   const { userId } = useParams<{ userId: string }>();
   const me = useAuthStore((s) => s.user);
+  const setMe = useAuthStore((s) => s.setUser);
 
-  const { user, games, error } = useProfile(userId);
+  const { user, games, error, patchUser } = useProfile(userId);
   const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   if (error) {
     return (
@@ -38,9 +41,20 @@ export default function Profile() {
 
   const isMe = me?._id === user._id;
 
+  const handleUsernameUpdated = (newUsername: string) => {
+    patchUser({ username: newUsername });
+    if (me && me._id === user._id) {
+      setMe({ ...me, username: newUsername });
+    }
+  };
+
   return (
     <div className={styles.page}>
-      <ProfileHero user={user} isMe={isMe} />
+      <ProfileHero
+        user={user}
+        isMe={isMe}
+        onEdit={isMe ? () => setEditOpen(true) : undefined}
+      />
       <StatsGrid user={user} />
 
       <section className={styles.list}>
@@ -77,6 +91,15 @@ export default function Profile() {
           </ul>
         )}
       </section>
+
+      {editOpen && isMe && (
+        <EditProfileModal
+          userId={user._id}
+          currentUsername={user.username}
+          onUsernameUpdated={handleUsernameUpdated}
+          onClose={() => setEditOpen(false)}
+        />
+      )}
     </div>
   );
 }

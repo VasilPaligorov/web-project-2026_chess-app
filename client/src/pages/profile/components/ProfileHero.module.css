@@ -5,6 +5,28 @@
   animation: rise 600ms var(--ease) backwards;
 }
 
+.editBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--rule);
+  padding: var(--s-2) var(--s-4);
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all var(--t-fast) var(--ease);
+}
+
+.editBtn:hover {
+  border-color: var(--ink);
+  background: var(--paper-deep);
+}
+
 .hero::after {
   content: '';
   position: absolute;

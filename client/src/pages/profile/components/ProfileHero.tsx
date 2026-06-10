@@ -5,9 +5,10 @@ import styles from './ProfileHero.module.css';
 interface Props {
   user: UserStats;
   isMe: boolean;
+  onEdit?: () => void;
 }
 
-export function ProfileHero({ user, isMe }: Props) {
+export function ProfileHero({ user, isMe, onEdit }: Props) {
   return (
     <header className={styles.hero}>
       <p className={styles.eyebrow}>
@@ -23,6 +24,11 @@ export function ProfileHero({ user, isMe }: Props) {
         <span className={styles.dot}>·</span>
         <span className={styles.joined}>joined {formatMonth(user.createdAt)}</span>
       </p>
+      {onEdit && (
+        <button type="button" className={styles.editBtn} onClick={onEdit}>
+          Edit profile
+        </button>
+      )}
     </header>
   );
 }

@@ -17,6 +17,7 @@ interface UseProfileResult {
   user: UserStats | null;
   games: Game[] | null;
   error: string | null;
+  patchUser: (patch: Partial<UserStats>) => void;
 }
 
 export function useProfile(userId: string | undefined): UseProfileResult {
@@ -54,5 +55,9 @@ export function useProfile(userId: string | undefined): UseProfileResult {
     };
   }, [userId]);
 
-  return { user, games, error };
+  const patchUser = (patch: Partial<UserStats>) => {
+    setUser((u) => (u ? { ...u, ...patch } : u));
+  };
+
+  return { user, games, error, patchUser };
 }
