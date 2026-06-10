@@ -15,11 +15,25 @@ function formatTime(iso: string): string {
 
 export function ChatPanel({ messages, currentUserId, onSend }: ChatPanelProps) {
   const [input, setInput] = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const nearBottomRef = useRef(true);
+
+  const handleScroll = () => {
+    const list = listRef.current;
+    if (!list) return;
+    nearBottomRef.current =
+      list.scrollHeight - list.scrollTop - list.clientHeight < 40;
+  };
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const list = listRef.current;
+    if (!list) return;
+    const lastMessage = messages[messages.length - 1];
+    const isOwnMessage = lastMessage?.userId === currentUserId;
+    if (isOwnMessage || nearBottomRef.current) {
+      list.scrollTop = list.scrollHeight;
+    }
+  }, [messages, currentUserId]);
 
   const handleSend = () => {
     const text = input.trim();
@@ -36,7 +50,7 @@ export function ChatPanel({ messages, currentUserId, onSend }: ChatPanelProps) {
     <div className={styles.panel}>
       <p className={styles.heading}>Chat</p>
 
-      <div className={styles.messageList}>
+      <div className={styles.messageList} ref={listRef} onScroll={handleScroll}>
         {messages.length === 0 && (
           <p className={styles.empty}>No messages yet.</p>
         )}
@@ -55,7 +69,6 @@ export function ChatPanel({ messages, currentUserId, onSend }: ChatPanelProps) {
             </div>
           );
         })}
-        <div ref={bottomRef} />
       </div>
 
       <div className={styles.inputRow}>
