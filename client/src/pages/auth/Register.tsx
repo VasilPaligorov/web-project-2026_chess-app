@@ -9,6 +9,8 @@ import styles from './Auth.module.css';
 
 type RedirectState = { from?: { pathname?: string } } | null;
 
+const USERNAME_PATTERN = /^[a-zA-Z0-9._-]{3,24}$/;
+
 export default function Register() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -28,6 +30,10 @@ export default function Register() {
   async function onSubmit(e: SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    if (!USERNAME_PATTERN.test(username)) {
+      setError('Username must be 3-24 characters using only letters, digits, ".", "_" or "-"');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post<AuthResponse>('/api/auth/register', {
