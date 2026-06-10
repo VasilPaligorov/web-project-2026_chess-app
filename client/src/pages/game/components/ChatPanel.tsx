@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ChatMessagePayload } from '../../../../../shared/types';
+import { MAX_CHAT_MESSAGE_LENGTH, type ChatMessagePayload } from '../../../../../shared/types';
 import styles from './ChatPanel.module.css';
 
 interface ChatPanelProps {
@@ -64,7 +64,7 @@ export function ChatPanel({ messages, currentUserId, onSend }: ChatPanelProps) {
           type="text"
           placeholder="Say something…"
           value={input}
-          maxLength={200}
+          maxLength={MAX_CHAT_MESSAGE_LENGTH}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
         />

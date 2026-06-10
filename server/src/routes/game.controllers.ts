@@ -80,7 +80,7 @@ export async function joinGame(req: Request, res: Response) {
   const whiteId = String(game.whitePlayer._id);
   const blackId = String(game.blackPlayer!._id);
   const io = getIO();
-  io.to([`user:${whiteId}`, `user:${blackId}`]).emit(SocketEvents.GAME_START, game);
+  io.to([`user:${whiteId}`, `user:${blackId}`, `spectate:${game.spectatorToken}`]).emit(SocketEvents.GAME_START, game);
   io.emit(SocketEvents.LOBBY_CHANGED);
 
   res.json({ success: true, data: game });

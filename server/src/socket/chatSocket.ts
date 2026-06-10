@@ -7,16 +7,38 @@ import { getIO } from './io';
 import { safeHandler } from './safeHandler';
 import {
   SocketEvents,
+  MAX_CHAT_MESSAGE_LENGTH,
   type ChatSendPayload,
   type ChatMessagePayload,
   type ChatHistoryPayload,
 } from '../../../shared/types';
 
+const CHAT_HISTORY_LIMIT = 50;
+
+interface StoredChatMessage {
+  _id: unknown;
+  userId: unknown;
+  username: string;
+  text: string;
+  createdAt: Date;
+}
+
+function toChatMessagePayload(message: StoredChatMessage, gameId: string): ChatMessagePayload {
+  return {
+    id: String(message._id),
+    gameId,
+    userId: String(message.userId),
+    username: message.username,
+    text: message.text,
+    createdAt: message.createdAt.toISOString(),
+  };
+}
+
 async function onChatSend(userId: string, payload: ChatSendPayload): Promise<void> {
   if (!payload || typeof payload.gameId !== 'string' || typeof payload.text !== 'string') return;
 
   const text = payload.text.trim();
-  if (!text || text.length > 200) return;
+  if (!text || text.length > MAX_CHAT_MESSAGE_LENGTH) return;
 
   if (!mongoose.Types.ObjectId.isValid(payload.gameId)) return;
 
@@ -38,34 +60,20 @@ async function onChatSend(userId: string, payload: ChatSendPayload): Promise<voi
     text,
   });
 
-  const outgoing: ChatMessagePayload = {
-    id: message._id.toString(),
-    gameId: payload.gameId,
-    userId,
-    username: user.username,
-    text,
-    createdAt: (message.createdAt as Date).toISOString(),
-  };
-
-  getIO().to(`game:${payload.gameId}`).emit(SocketEvents.CHAT_RECEIVE, outgoing);
+  getIO()
+    .to(`game:${payload.gameId}`)
+    .emit(SocketEvents.CHAT_RECEIVE, toChatMessagePayload(message, payload.gameId));
 }
 
 export async function sendChatHistory(socket: Socket, gameId: string): Promise<void> {
   const messages = await Message.find({ gameId })
     .sort({ createdAt: -1, _id: -1 })
-    .limit(50)
+    .limit(CHAT_HISTORY_LIMIT)
     .lean();
 
   const history: ChatHistoryPayload = {
     gameId,
-    messages: messages.reverse().map((m) => ({
-      id: m._id.toString(),
-      gameId,
-      userId: m.userId.toString(),
-      username: m.username,
-      text: m.text,
-      createdAt: (m.createdAt as Date).toISOString(),
-    })),
+    messages: messages.reverse().map((m) => toChatMessagePayload(m, gameId)),
   };
 
   socket.emit(SocketEvents.CHAT_HISTORY, history);

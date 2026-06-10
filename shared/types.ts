@@ -98,6 +98,8 @@ export interface DrawDeclinedPayload {
   gameId: string;
 }
 
+export const MAX_CHAT_MESSAGE_LENGTH = 200;
+
 export interface ChatSendPayload {
   gameId: string;
   text: string;
