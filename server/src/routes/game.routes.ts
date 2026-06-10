@@ -8,7 +8,7 @@ import {
   getGameById,
   joinGame,
   cancelGame,
-} from './game.controllers';
+} from '../controllers/game.controller';
 import { getSpectateGame } from '../controllers/spectator.controller';
 
 const router = Router();

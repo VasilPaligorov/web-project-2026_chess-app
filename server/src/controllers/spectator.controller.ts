@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Game } from '../models/Game';
-import { PUBLIC_USER_FIELDS } from '../routes/game.helpers';
+import { PUBLIC_USER_FIELDS } from './game.helpers';
 
 export async function getSpectateGame(req: Request, res: Response) {
   const game = await Game.findOne({ spectatorToken: req.params.token })
