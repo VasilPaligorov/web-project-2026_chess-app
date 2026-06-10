@@ -1,60 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import axios from 'axios';
-import api from '../../services/api';
 import { useAuthStore } from '../../store/authStore';
-import type { Game, UserStats } from '../../../../shared/types';
 import { ReplayViewer } from './components/ReplayViewer';
 import { formatDate, formatMonth, pct } from './profile.utils';
+import { useProfile } from './useProfile';
 import styles from './Profile.module.css';
-
-interface UserResponse {
-  success: boolean;
-  data: UserStats;
-}
-interface GamesResponse {
-  success: boolean;
-  data: Game[];
-}
 
 export default function Profile() {
   const { userId } = useParams<{ userId: string }>();
   const me = useAuthStore((s) => s.user);
 
-  const [user, setUser] = useState<UserStats | null>(null);
-  const [games, setGames] = useState<Game[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { user, games, error } = useProfile(userId);
   const [expandedGameId, setExpandedGameId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-    let cancelled = false;
-    setError(null);
-    setUser(null);
-    setGames(null);
-
-    Promise.all([
-      api.get<UserResponse>(`/api/users/${userId}`),
-      api.get<GamesResponse>(`/api/users/${userId}/games?limit=10`),
-    ])
-      .then(([u, g]) => {
-        if (cancelled) return;
-        if (u.data.success) setUser(u.data.data);
-        if (g.data.success) setGames(g.data.data);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (axios.isAxiosError(err) && err.response?.status === 404) {
-          setError('Player not found');
-        } else {
-          setError('Could not load profile');
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
 
   if (error) {
     return (
