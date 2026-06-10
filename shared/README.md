@@ -119,6 +119,7 @@ export interface MovePayload {
 }
 
 export interface MoveUpdatePayload {
+  gameId: string;
   fen: string;
   pgn: string;
   turn: 'w' | 'b';
@@ -126,8 +127,9 @@ export interface MoveUpdatePayload {
 }
 
 export interface GameOverPayload {
+  gameId: string;
   winner: 'white' | 'black' | 'draw';
-  reason: 'checkmate' | 'resignation' | 'stalemate' | 'timeout';
+  reason: 'checkmate' | 'resignation' | 'stalemate' | ...;
 }
 
 export interface GameStartPayload {
@@ -144,11 +146,13 @@ Centralising event name strings as a const enum prevents typos across the codeba
 ```ts
 export const SocketEvents = {
   GAME_JOIN:       'game:join',
+  GAME_LEAVE:      'game:leave',
   GAME_START:      'game:start',
   GAME_OVER:       'game:over',
   MOVE_MAKE:       'move:make',
   MOVE_UPDATE:     'move:update',
   SPECTATOR_JOIN:  'spectator:join',
+  SPECTATOR_LEAVE: 'spectator:leave',
 } as const;
 
 export type SocketEvent = typeof SocketEvents[keyof typeof SocketEvents];

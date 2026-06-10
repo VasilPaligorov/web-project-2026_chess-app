@@ -19,13 +19,10 @@ interface VerboseMove {
 }
 
 interface Replay {
-  fens: string[];           // fens[0] = start, fens[n] = position after ply n
-  moves: VerboseMove[];     // length = fens.length - 1
+  fens: string[];
+  moves: VerboseMove[];
 }
 
-// Replay the PGN once: produce both the FEN at each ply (for O(1) navigation)
-// and the SAN/from/to triples (for the move list and last-move highlight).
-// An empty or malformed PGN collapses to "start position only, no moves".
 function buildReplay(pgn: string): Replay {
   const fens: string[] = [STARTING_FEN];
   const moves: VerboseMove[] = [];
@@ -51,14 +48,10 @@ export function ReplayViewer({ game, viewerColor, onClose }: Props) {
   const lastPly = fens.length - 1;
   const [plyIndex, setPlyIndex] = useState<number>(lastPly);
 
-  // Reset the cursor when the underlying game changes (e.g. user expands a
-  // different row in the list before collapsing this one).
   useEffect(() => {
     setPlyIndex(lastPly);
   }, [game._id, lastPly]);
 
-  // ←/→ step one ply, Home/End jump to start/end. Listener is window-level
-  // because the viewer is the only one mounted at a time per profile page.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
@@ -79,8 +72,6 @@ export function ReplayViewer({ game, viewerColor, onClose }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [lastPly]);
 
-  // Highlight the from/to squares of the move that produced the current
-  // position (i.e. moves[plyIndex - 1]). Skipped on the starting position.
   const squareStyles = useMemo<Record<string, React.CSSProperties>>(() => {
     if (plyIndex === 0) return {};
     const m = moves[plyIndex - 1];

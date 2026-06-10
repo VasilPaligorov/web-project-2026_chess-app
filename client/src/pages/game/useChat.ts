@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getSocket } from '../../services/socket';
 import {
   SocketEvents,
+  type ChatHistoryPayload,
   type ChatMessagePayload,
   type ChatSendPayload,
 } from '../../../../shared/types';
@@ -16,13 +17,16 @@ export function useChat(gameId: string | undefined): UseChatResult {
 
   useEffect(() => {
     if (!gameId) return;
+    setMessages([]);
     const socket = getSocket();
 
-    const onHistory = (history: ChatMessagePayload[]) => {
-      setMessages(history);
+    const onHistory = (history: ChatHistoryPayload) => {
+      if (history.gameId !== gameId) return;
+      setMessages(history.messages);
     };
 
     const onReceive = (msg: ChatMessagePayload) => {
+      if (msg.gameId !== gameId) return;
       setMessages((prev) => [...prev, msg]);
     };
 

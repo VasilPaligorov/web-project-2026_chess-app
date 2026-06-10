@@ -6,11 +6,8 @@ import type { AuthResponse } from '../../../shared/types';
 import styles from '../pages/auth/Auth.module.css';
 
 interface Props {
-  /** Text shown on the button, e.g. "Log in with Google". */
   label: string;
-  /** Path to navigate to after a successful sign-in. */
   redirectTo: string;
-  /** Surface an error message to the parent page. */
   onError: (message: string) => void;
 }
 

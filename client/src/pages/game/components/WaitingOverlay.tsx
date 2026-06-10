@@ -1,12 +1,11 @@
 import styles from './WaitingOverlay.module.css';
 
 interface Props {
-  spectatorEnabled: boolean;
   onShare: () => void;
   onCancel: () => void;
 }
 
-export function WaitingOverlay({ spectatorEnabled, onShare, onCancel }: Props) {
+export function WaitingOverlay({ onShare, onCancel }: Props) {
   return (
     <div className={styles.overlay}>
       <p className={styles.eyebrow}>Awaiting opponent</p>
@@ -15,11 +14,7 @@ export function WaitingOverlay({ spectatorEnabled, onShare, onCancel }: Props) {
         Share the spectator link, or wait for someone to take the seat.
       </p>
       <div className={styles.actions}>
-        <button
-          className={styles.primary}
-          onClick={onShare}
-          disabled={!spectatorEnabled}
-        >
+        <button className={styles.primary} onClick={onShare}>
           Share link
         </button>
         <button className={styles.secondary} onClick={onCancel}>

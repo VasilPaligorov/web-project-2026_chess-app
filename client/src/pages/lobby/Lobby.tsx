@@ -4,7 +4,7 @@ import api from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import { useWaitingGames } from '../../hooks/useWaitingGames';
-import type { Game } from '../../../../shared/types';
+import { SocketEvents, type Game } from '../../../../shared/types';
 import { ActiveGamesList } from './components/ActiveGamesList';
 import { LobbyHero } from './components/LobbyHero';
 import { WaitingGamesList } from './components/WaitingGamesList';
@@ -32,24 +32,20 @@ export default function Lobby() {
     try {
       const { data } = await api.get<CurrentGamesResponse>('/api/games/me/current');
       if (data.success) setCurrentGames(data.data);
-    } catch {
-      /* best-effort */
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {
     fetchCurrentGames();
     const socket = getSocket();
-    // Auto-navigate the lobby into the game when an opponent joins one of our
-    // waiting games — fires on `game:start` emitted to the user room.
     const onGameStart = (game: Game) => navigate(`/game/${game._id}`);
-    socket.on('game:start', onGameStart);
-    socket.on('game:start', fetchCurrentGames);
-    socket.on('lobby:changed', fetchCurrentGames);
+    socket.on(SocketEvents.GAME_START, onGameStart);
+    socket.on(SocketEvents.GAME_START, fetchCurrentGames);
+    socket.on(SocketEvents.LOBBY_CHANGED, fetchCurrentGames);
     return () => {
-      socket.off('game:start', onGameStart);
-      socket.off('game:start', fetchCurrentGames);
-      socket.off('lobby:changed', fetchCurrentGames);
+      socket.off(SocketEvents.GAME_START, onGameStart);
+      socket.off(SocketEvents.GAME_START, fetchCurrentGames);
+      socket.off(SocketEvents.LOBBY_CHANGED, fetchCurrentGames);
     };
   }, [navigate, fetchCurrentGames]);
 
@@ -71,8 +67,6 @@ export default function Lobby() {
     setActionError(null);
     setJoiningId(id);
     try {
-      // On success the server emits `game:start` to both players;
-      // the listener above will navigate this client to /game/:id.
       const { data } = await api.post<GameResponse>(`/api/games/${id}/join`);
       if (!data.success) setActionError(data.message ?? 'Could not join game');
     } catch (err) {

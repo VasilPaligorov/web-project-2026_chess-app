@@ -12,9 +12,7 @@ export default function Layout() {
   const handleLogout = async () => {
     try {
       await api.post('/api/auth/logout');
-    } catch {
-      /* token may already be invalid; clear local state regardless */
-    }
+    } catch {}
     disconnectSocket();
     logout();
     navigate('/login');

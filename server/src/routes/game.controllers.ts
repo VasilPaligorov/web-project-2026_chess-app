@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { Game } from '../models/Game';
 import { getIO } from '../socket/io';
+import { SocketEvents } from '../../../shared/types';
 import { PUBLIC_USER_FIELDS, activeOrWaitingGamesQuery, parseObjectId } from './game.helpers';
 
 export async function createGame(req: Request, res: Response) {
@@ -9,7 +10,7 @@ export async function createGame(req: Request, res: Response) {
 
   const game = await Game.create({ whitePlayer: userId });
   const populated = await game.populate('whitePlayer', PUBLIC_USER_FIELDS);
-  getIO().emit('lobby:changed');
+  getIO().emit(SocketEvents.LOBBY_CHANGED);
   res.status(201).json({ success: true, data: populated });
 }
 
@@ -79,8 +80,8 @@ export async function joinGame(req: Request, res: Response) {
   const whiteId = String(game.whitePlayer._id);
   const blackId = String(game.blackPlayer!._id);
   const io = getIO();
-  io.to([`user:${whiteId}`, `user:${blackId}`]).emit('game:start', game);
-  io.emit('lobby:changed');
+  io.to([`user:${whiteId}`, `user:${blackId}`]).emit(SocketEvents.GAME_START, game);
+  io.emit(SocketEvents.LOBBY_CHANGED);
 
   res.json({ success: true, data: game });
 }
@@ -107,6 +108,6 @@ export async function cancelGame(req: Request, res: Response) {
     return;
   }
 
-  getIO().emit('lobby:changed');
+  getIO().emit(SocketEvents.LOBBY_CHANGED);
   res.json({ success: true, message: 'Game cancelled' });
 }

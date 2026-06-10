@@ -48,7 +48,6 @@ export async function register(req: Request, res: Response) {
 
     res.status(201).json({ success: true, data: { user: toPublicUser(user), token } });
   } catch (err: unknown) {
-    // Duplicate key error from a race between concurrent registrations
     if (isDuplicateKeyError(err)) {
       res.status(409).json({ success: false, message: 'That email or username is already taken' });
       return;
@@ -102,7 +101,6 @@ export async function googleLogin(req: Request, res: Response) {
     return;
   }
 
-  // Account linking: reuse the existing account when the email already exists.
   let user = await User.findOne({ email: profile.email });
 
   if (!user) {
@@ -113,7 +111,6 @@ export async function googleLogin(req: Request, res: Response) {
         googleId: profile.googleId,
       });
     } catch (err: unknown) {
-      // Lost a race with a concurrent first-time Google login for the same email.
       if (isDuplicateKeyError(err)) {
         user = await User.findOne({ email: profile.email });
       }
@@ -121,7 +118,6 @@ export async function googleLogin(req: Request, res: Response) {
     }
   }
 
-  // Link Google to a pre-existing email/password account on first Google sign-in.
   if (!user.googleId) {
     user.googleId = profile.googleId;
     await user.save();

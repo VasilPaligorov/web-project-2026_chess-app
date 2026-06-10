@@ -63,6 +63,7 @@ export interface MovePayload {
 }
 
 export interface MoveUpdatePayload {
+  gameId: string;
   fen: string;
   pgn: string;
   turn: 'w' | 'b';
@@ -70,6 +71,7 @@ export interface MoveUpdatePayload {
 }
 
 export interface GameOverPayload {
+  gameId: string;
   winner: 'white' | 'black' | 'draw';
   reason:
     | 'checkmate'
@@ -83,11 +85,17 @@ export interface GameOverPayload {
 }
 
 export interface MoveErrorPayload {
+  gameId: string;
   message: string;
 }
 
 export interface DrawOfferPayload {
+  gameId: string;
   from: 'white' | 'black';
+}
+
+export interface DrawDeclinedPayload {
+  gameId: string;
 }
 
 export interface ChatSendPayload {
@@ -97,14 +105,21 @@ export interface ChatSendPayload {
 
 export interface ChatMessagePayload {
   id: string;
+  gameId: string;
   userId: string;
   username: string;
   text: string;
   createdAt: string;
 }
 
+export interface ChatHistoryPayload {
+  gameId: string;
+  messages: ChatMessagePayload[];
+}
+
 export const SocketEvents = {
   GAME_JOIN:      'game:join',
+  GAME_LEAVE:     'game:leave',
   GAME_START:     'game:start',
   GAME_OVER:      'game:over',
   GAME_RESIGN:    'game:resign',
@@ -115,10 +130,12 @@ export const SocketEvents = {
   DRAW_ACCEPT:    'draw:accept',
   DRAW_DECLINE:   'draw:decline',
   DRAW_DECLINED:  'draw:declined',
-  SPECTATOR_JOIN: 'spectator:join',
+  SPECTATOR_JOIN:  'spectator:join',
+  SPECTATOR_LEAVE: 'spectator:leave',
   CHAT_SEND:      'chat:send',
   CHAT_RECEIVE:   'chat:receive',
   CHAT_HISTORY:   'chat:history',
+  LOBBY_CHANGED:  'lobby:changed',
 } as const;
 
 export type SocketEvent = typeof SocketEvents[keyof typeof SocketEvents];

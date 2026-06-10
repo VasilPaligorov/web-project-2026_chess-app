@@ -15,9 +15,7 @@ export default function Header() {
     setLoggingOut(true);
     try {
       await api.post('/api/auth/logout');
-    } catch {
-      // Server unreachable or token already invalid — log out locally either way.
-    }
+    } catch {}
     logout();
     navigate('/');
   }

@@ -60,14 +60,9 @@
   transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
 }
 
-.primary:hover:not(:disabled) {
+.primary:hover {
   background: var(--oxblood);
   border-color: var(--oxblood);
-}
-
-.primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .secondary {

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import api from '../services/api';
 import { getSocket } from '../services/socket';
-import type { Game } from '../../../shared/types';
+import { SocketEvents, type Game } from '../../../shared/types';
 
 interface ListResponse {
   success: boolean;
@@ -35,11 +35,11 @@ export function useWaitingGames(pollMs = 30_000) {
     const id = setInterval(refresh, pollMs);
 
     const socket = getSocket();
-    socket.on('lobby:changed', refresh);
+    socket.on(SocketEvents.LOBBY_CHANGED, refresh);
 
     return () => {
       clearInterval(id);
-      socket.off('lobby:changed', refresh);
+      socket.off(SocketEvents.LOBBY_CHANGED, refresh);
     };
   }, [refresh, pollMs]);
 
