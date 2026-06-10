@@ -21,16 +21,6 @@ function counterField(result: Result, side: 'white' | 'black'): 'wins' | 'losses
   return result === side ? 'wins' : 'losses';
 }
 
-/**
- * Standard Elo with K=32. Updates both players' ratings, win/loss/draw counts,
- * and peak rating. Returns the per-side delta (or null if either user is missing).
- *
- * Uses findByIdAndUpdate with atomic operators so we never load+save a User
- * document (avoids running validators against the `select: false` passwordHash).
- *
- * Note: read-then-write — if two of a user's games finish in the same instant
- * the second computation uses a stale rating. Acceptable at school-project scale.
- */
 export async function updateElo(
   whitePlayerId: string,
   blackPlayerId: string,

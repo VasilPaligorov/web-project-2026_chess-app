@@ -97,11 +97,7 @@ export default function GamePage() {
 
   return (
     <div className={styles.page}>
-      <GameHeader
-        game={game}
-        spectatorEnabled={!!spectatorToken}
-        onShareClick={() => setShareOpen(true)}
-      />
+      <GameHeader game={game} onShareClick={() => setShareOpen(true)} />
 
       <div className={styles.status}>
         <span className={styles.statusEyebrow}>{myColorLabel}</span>
@@ -123,7 +119,6 @@ export default function GamePage() {
 
           {game.status === 'waiting' && !gameOver && (
             <WaitingOverlay
-              spectatorEnabled={!!spectatorToken}
               onShare={() => setShareOpen(true)}
               onCancel={handleCancelWaiting}
             />
@@ -161,7 +156,6 @@ export default function GamePage() {
             <ChatPanel
               messages={messages}
               currentUserId={user._id}
-              disabled={game.status !== 'active' || !!gameOver}
               onSend={sendMessage}
             />
           )}

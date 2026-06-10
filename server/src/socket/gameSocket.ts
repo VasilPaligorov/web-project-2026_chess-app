@@ -5,6 +5,7 @@ import { Game, IGame } from '../models/Game';
 import { updateElo } from '../services/eloService';
 import { getIO } from './io';
 import { sendChatHistory } from './chatSocket';
+import { safeHandler } from './safeHandler';
 import {
   SocketEvents,
   GameOverPayload,
@@ -12,6 +13,7 @@ import {
   MovePayload,
   MoveUpdatePayload,
   DrawOfferPayload,
+  DrawDeclinedPayload,
 } from '../../../shared/types';
 
 type Color = 'white' | 'black';
@@ -124,7 +126,7 @@ async function finishGame(
   applyGameEnd(game, result, winnerId, reason);
   await game.save();
   await applyEloUpdate(game);
-  emitGameOver(game, { winner: result, reason });
+  emitGameOver(game, { gameId: String(game._id), winner: result, reason });
 }
 
 async function onGameJoin(socket: Socket, userId: string, gameId: string): Promise<void> {
@@ -146,14 +148,14 @@ async function onMoveMake(
   const { game, color } = loaded;
 
   if (game.status !== 'active') {
-    socket.emit(SocketEvents.MOVE_ERROR, { message: 'Game is not active' } as MoveErrorPayload);
+    socket.emit(SocketEvents.MOVE_ERROR, { gameId: payload.gameId, message: 'Game is not active' } as MoveErrorPayload);
     return;
   }
 
   const chess = loadChess(game);
   const expected = color === 'white' ? 'w' : 'b';
   if (chess.turn() !== expected) {
-    socket.emit(SocketEvents.MOVE_ERROR, { message: "It's not your turn" } as MoveErrorPayload);
+    socket.emit(SocketEvents.MOVE_ERROR, { gameId: payload.gameId, message: "It's not your turn" } as MoveErrorPayload);
     return;
   }
 
@@ -165,11 +167,11 @@ async function onMoveMake(
       promotion: payload.move.promotion ?? 'q',
     });
   } catch {
-    socket.emit(SocketEvents.MOVE_ERROR, { message: 'Illegal move' } as MoveErrorPayload);
+    socket.emit(SocketEvents.MOVE_ERROR, { gameId: payload.gameId, message: 'Illegal move' } as MoveErrorPayload);
     return;
   }
   if (!made) {
-    socket.emit(SocketEvents.MOVE_ERROR, { message: 'Illegal move' } as MoveErrorPayload);
+    socket.emit(SocketEvents.MOVE_ERROR, { gameId: payload.gameId, message: 'Illegal move' } as MoveErrorPayload);
     return;
   }
 
@@ -185,6 +187,7 @@ async function onMoveMake(
   await game.save();
 
   const update: MoveUpdatePayload = {
+    gameId: String(game._id),
     fen: game.fen,
     pgn: game.pgn,
     turn: chess.turn(),
@@ -201,8 +204,13 @@ async function onMoveMake(
 
   if (end) {
     await applyEloUpdate(game);
-    emitGameOver(game, { winner: end.result, reason: end.reason });
+    emitGameOver(game, { gameId: String(game._id), winner: end.result, reason: end.reason });
   }
+}
+
+function onGameLeave(socket: Socket, gameId: string): void {
+  if (typeof gameId !== 'string') return;
+  socket.leave(`game:${gameId}`);
 }
 
 async function onGameResign(socket: Socket, userId: string, gameId: string): Promise<void> {
@@ -222,18 +230,18 @@ async function onDrawOffer(socket: Socket, userId: string, gameId: string): Prom
 
 if (game.drawOffer && game.drawOffer.from) {
   if (game.drawOffer.from.toString() === userId) {
-  
-    const payload: DrawOfferPayload = { from: color };
+
+    const payload: DrawOfferPayload = { gameId, from: color };
     socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_OFFER, payload);
-    return; 
-  } 
+    return;
+  }
   return;
 }
 
 game.drawOffer = { from: new mongoose.Types.ObjectId(userId) };
 await game.save();
 
-const payload: DrawOfferPayload = { from: color };
+const payload: DrawOfferPayload = { gameId, from: color };
 socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_OFFER, payload);
 }
 
@@ -254,17 +262,18 @@ async function onDrawDecline(socket: Socket, userId: string, gameId: string): Pr
   if (!game.drawOffer || game.drawOffer.from.toString() === userId) return;
   game.drawOffer = null;
   await game.save();
-  socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_DECLINED);
+  socket.to(`game:${gameId}`).emit(SocketEvents.DRAW_DECLINED, { gameId } as DrawDeclinedPayload);
 }
 
 export function registerGameHandlers(socket: Socket): void {
   const userId = socket.data.userId;
   if (!userId) return;
 
-  socket.on(SocketEvents.GAME_JOIN,    (id: string)           => onGameJoin(socket, userId, id));
-  socket.on(SocketEvents.MOVE_MAKE,    (payload: MovePayload) => onMoveMake(socket, userId, payload));
-  socket.on(SocketEvents.GAME_RESIGN,  (id: string)           => onGameResign(socket, userId, id));
-  socket.on(SocketEvents.DRAW_OFFER,   (id: string)           => onDrawOffer(socket, userId, id));
-  socket.on(SocketEvents.DRAW_ACCEPT,  (id: string)           => onDrawAccept(socket, userId, id));
-  socket.on(SocketEvents.DRAW_DECLINE, (id: string)           => onDrawDecline(socket, userId, id));
+  socket.on(SocketEvents.GAME_JOIN,    safeHandler((id: string)           => onGameJoin(socket, userId, id)));
+  socket.on(SocketEvents.GAME_LEAVE,   (id: string)                       => onGameLeave(socket, id));
+  socket.on(SocketEvents.MOVE_MAKE,    safeHandler((payload: MovePayload) => onMoveMake(socket, userId, payload)));
+  socket.on(SocketEvents.GAME_RESIGN,  safeHandler((id: string)           => onGameResign(socket, userId, id)));
+  socket.on(SocketEvents.DRAW_OFFER,   safeHandler((id: string)           => onDrawOffer(socket, userId, id)));
+  socket.on(SocketEvents.DRAW_ACCEPT,  safeHandler((id: string)           => onDrawAccept(socket, userId, id)));
+  socket.on(SocketEvents.DRAW_DECLINE, safeHandler((id: string)           => onDrawDecline(socket, userId, id)));
 }

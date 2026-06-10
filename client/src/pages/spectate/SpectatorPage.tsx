@@ -17,34 +17,77 @@ export default function SpectatorPage() {
   useEffect(() => {
     if (!token) return;
 
-    // Subscribe to live updates BEFORE fetching, so a move:update arriving
-    // mid-flight isn't overwritten by the late initial-state response.
-    let receivedLiveUpdate = false;
+    let cancelled = false;
+    let knownGameId: string | null = null;
+    let pendingMove: MoveUpdatePayload | null = null;
+    let pendingOver: GameOverPayload | null = null;
 
     const socket = getSocket();
     const onMoveUpdate = (payload: MoveUpdatePayload) => {
-      receivedLiveUpdate = true;
-      setFen(payload.fen);
+      if (!knownGameId) {
+        pendingMove = payload;
+        return;
+      }
+      if (payload.gameId === knownGameId) setFen(payload.fen);
     };
-    const onGameOver = (payload: GameOverPayload) => setResult(payload);
+    const onGameOver = (payload: GameOverPayload) => {
+      if (!knownGameId) {
+        pendingOver = payload;
+        return;
+      }
+      if (payload.gameId === knownGameId) setResult(payload);
+    };
 
+    const fetchGame = () => {
+      api
+        .get<{ success: boolean; data: Game }>(`/api/games/spectate/${token}`)
+        .then(({ data }) => {
+          if (cancelled) return;
+          if (!data.success) {
+            setError('Game not found');
+            return;
+          }
+          const g = data.data;
+          knownGameId = g._id;
+          setGame(g);
+          if (pendingMove && pendingMove.gameId === g._id) {
+            setFen(pendingMove.fen);
+          } else {
+            setFen(g.fen);
+          }
+          if (pendingOver && pendingOver.gameId === g._id) {
+            setResult(pendingOver);
+          } else if (g.status === 'finished' && g.result && g.endReason) {
+            setResult({ gameId: g._id, winner: g.result, reason: g.endReason });
+          }
+          pendingMove = null;
+          pendingOver = null;
+        })
+        .catch(() => {
+          if (!cancelled) setError('Game not found');
+        });
+    };
+
+    let wasConnected = socket.connected;
+    const onConnect = () => {
+      socket.emit(SocketEvents.SPECTATOR_JOIN, token);
+      if (wasConnected) fetchGame();
+      wasConnected = true;
+    };
+
+    socket.on('connect', onConnect);
     socket.on(SocketEvents.MOVE_UPDATE, onMoveUpdate);
     socket.on(SocketEvents.GAME_OVER, onGameOver);
-    socket.emit(SocketEvents.SPECTATOR_JOIN, token);
 
-    api
-      .get<{ success: boolean; data: Game }>(`/api/games/spectate/${token}`)
-      .then(({ data }) => {
-        if (data.success) {
-          setGame(data.data);
-          if (!receivedLiveUpdate) setFen(data.data.fen);
-        }
-      })
-      .catch(() => setError('Game not found'));
+    socket.emit(SocketEvents.SPECTATOR_JOIN, token);
+    fetchGame();
 
     return () => {
+      cancelled = true;
+      socket.off('connect', onConnect);
       socket.off(SocketEvents.MOVE_UPDATE, onMoveUpdate);
       socket.off(SocketEvents.GAME_OVER, onGameOver);
+      socket.emit(SocketEvents.SPECTATOR_LEAVE, token);
     };
   }, [token]);
 

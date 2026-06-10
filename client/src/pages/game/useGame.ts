@@ -6,6 +6,7 @@ import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
 import {
   SocketEvents,
+  type DrawDeclinedPayload,
   type DrawOfferPayload,
   type Game,
   type GameOverPayload,
@@ -72,9 +73,11 @@ export function useGame(gameId: string | undefined): UseGameResult {
     const socket = getSocket();
 
     const onMoveUpdate = (payload: MoveUpdatePayload) => {
+      if (payload.gameId !== gameId) return;
       setFen(payload.fen);
     };
     const onGameOver = (payload: GameOverPayload) => {
+      if (payload.gameId !== gameId) return;
       setGameOver(payload);
       setDrawPending(false);
       setIncomingDraw(null);
@@ -86,49 +89,70 @@ export function useGame(gameId: string | undefined): UseGameResult {
         .catch(() => {});
     };
     const onMoveError = (payload: MoveErrorPayload) => {
-      setActionMsg(payload?.message ?? 'Illegal move');
+      if (payload?.gameId !== gameId) return;
+      setActionMsg(payload.message ?? 'Illegal move');
     };
     const onDrawOffer = (payload: DrawOfferPayload) => {
+      if (payload?.gameId !== gameId) return;
       setIncomingDraw(payload);
     };
-    const onDrawDeclined = () => {
+    const onDrawDeclined = (payload: DrawDeclinedPayload) => {
+      if (payload?.gameId !== gameId) return;
       setDrawPending(false);
       setActionMsg('Draw declined');
     };
 
+    const fetchGame = () => {
+      api
+        .get<{ success: boolean; data: Game }>(`/api/games/${gameId}`)
+        .then(({ data }) => {
+          if (cancelled || !data.success) return;
+          setGame(data.data);
+          setFen(data.data.fen);
+          if (data.data.status === 'finished' && data.data.result && data.data.endReason) {
+            setGameOver({
+              gameId: data.data._id,
+              winner: data.data.result,
+              reason: data.data.endReason,
+            });
+          }
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          if (axios.isAxiosError(err) && err.response?.status === 404) {
+            setPageError('Game not found');
+          } else {
+            setPageError('Could not load game');
+          }
+        });
+    };
+
+    let wasConnected = socket.connected;
+    const onConnect = () => {
+      socket.emit(SocketEvents.GAME_JOIN, gameId);
+      if (wasConnected) fetchGame();
+      wasConnected = true;
+    };
+
+    socket.on('connect', onConnect);
     socket.on(SocketEvents.MOVE_UPDATE, onMoveUpdate);
     socket.on(SocketEvents.GAME_OVER, onGameOver);
     socket.on(SocketEvents.MOVE_ERROR, onMoveError);
     socket.on(SocketEvents.DRAW_OFFER, onDrawOffer);
     socket.on(SocketEvents.DRAW_DECLINED, onDrawDeclined);
 
-    api
-      .get<{ success: boolean; data: Game }>(`/api/games/${gameId}`)
-      .then(({ data }) => {
-        if (cancelled || !data.success) return;
-        setGame(data.data);
-        setFen(data.data.fen);
-        if (data.data.status === 'finished' && data.data.result && data.data.endReason) {
-          setGameOver({ winner: data.data.result, reason: data.data.endReason });
-        }
-        socket.emit(SocketEvents.GAME_JOIN, gameId);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        if (axios.isAxiosError(err) && err.response?.status === 404) {
-          setPageError('Game not found');
-        } else {
-          setPageError('Could not load game');
-        }
-      });
+    socket.emit(SocketEvents.GAME_JOIN, gameId);
+    fetchGame();
 
     return () => {
       cancelled = true;
+      socket.off('connect', onConnect);
       socket.off(SocketEvents.MOVE_UPDATE, onMoveUpdate);
       socket.off(SocketEvents.GAME_OVER, onGameOver);
       socket.off(SocketEvents.MOVE_ERROR, onMoveError);
       socket.off(SocketEvents.DRAW_OFFER, onDrawOffer);
       socket.off(SocketEvents.DRAW_DECLINED, onDrawDeclined);
+      socket.emit(SocketEvents.GAME_LEAVE, gameId);
     };
   }, [gameId, user?._id, setUser]);
 

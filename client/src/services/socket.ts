@@ -9,8 +9,6 @@ let socketToken: string | null = null;
 export function getSocket(): Socket {
   const token = useAuthStore.getState().token;
 
-  // Reset cached socket if the auth token has changed since it was created
-  // (e.g. logout → login in the same tab without a full reload).
   if (socket && socketToken !== token) {
     socket.disconnect();
     socket = null;

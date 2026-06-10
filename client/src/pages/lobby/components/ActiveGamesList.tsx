@@ -56,9 +56,6 @@ interface RowProps {
 }
 
 function GameRow({ game, index, currentUserId, onResume }: RowProps) {
-  // The opponent is the player who isn't us. If we're white, opponent is black,
-  // and vice versa. Fallbacks shouldn't happen in 'active' games (both seats filled)
-  // but we guard for safety so the UI never blanks out.
   const iAmWhite = game.whitePlayer._id === currentUserId;
   const opponent = iAmWhite ? game.blackPlayer : game.whitePlayer;
 

@@ -5,7 +5,6 @@ import styles from './ChatPanel.module.css';
 interface ChatPanelProps {
   messages: ChatMessagePayload[];
   currentUserId: string;
-  disabled: boolean;
   onSend: (text: string) => void;
 }
 
@@ -14,7 +13,7 @@ function formatTime(iso: string): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-export function ChatPanel({ messages, currentUserId, disabled, onSend }: ChatPanelProps) {
+export function ChatPanel({ messages, currentUserId, onSend }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +23,7 @@ export function ChatPanel({ messages, currentUserId, disabled, onSend }: ChatPan
 
   const handleSend = () => {
     const text = input.trim();
-    if (!text || disabled) return;
+    if (!text) return;
     onSend(text);
     setInput('');
   };
@@ -63,9 +62,8 @@ export function ChatPanel({ messages, currentUserId, disabled, onSend }: ChatPan
         <input
           className={styles.input}
           type="text"
-          placeholder={disabled ? 'Waiting for opponent…' : 'Say something…'}
+          placeholder="Say something…"
           value={input}
-          disabled={disabled}
           maxLength={200}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -73,7 +71,7 @@ export function ChatPanel({ messages, currentUserId, disabled, onSend }: ChatPan
         <button
           className={styles.sendBtn}
           onClick={handleSend}
-          disabled={disabled || !input.trim()}
+          disabled={!input.trim()}
         >
           ⬆
         </button>

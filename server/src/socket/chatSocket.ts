@@ -4,13 +4,15 @@ import { Game } from '../models/Game';
 import { User } from '../models/User';
 import { Message } from '../models/Message';
 import { getIO } from './io';
+import { safeHandler } from './safeHandler';
 import {
   SocketEvents,
   type ChatSendPayload,
   type ChatMessagePayload,
+  type ChatHistoryPayload,
 } from '../../../shared/types';
 
-async function onChatSend(socket: Socket, userId: string, payload: ChatSendPayload): Promise<void> {
+async function onChatSend(userId: string, payload: ChatSendPayload): Promise<void> {
   if (!payload || typeof payload.gameId !== 'string' || typeof payload.text !== 'string') return;
 
   const text = payload.text.trim();
@@ -38,6 +40,7 @@ async function onChatSend(socket: Socket, userId: string, payload: ChatSendPaylo
 
   const outgoing: ChatMessagePayload = {
     id: message._id.toString(),
+    gameId: payload.gameId,
     userId,
     username: user.username,
     text,
@@ -48,15 +51,22 @@ async function onChatSend(socket: Socket, userId: string, payload: ChatSendPaylo
 }
 
 export async function sendChatHistory(socket: Socket, gameId: string): Promise<void> {
-  const messages = await Message.find({ gameId }).sort({ createdAt: 1 }).limit(50).lean();
+  const messages = await Message.find({ gameId })
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(50)
+    .lean();
 
-  const history: ChatMessagePayload[] = messages.map((m) => ({
-    id: m._id.toString(),
-    userId: m.userId.toString(),
-    username: m.username,
-    text: m.text,
-    createdAt: (m.createdAt as Date).toISOString(),
-  }));
+  const history: ChatHistoryPayload = {
+    gameId,
+    messages: messages.reverse().map((m) => ({
+      id: m._id.toString(),
+      gameId,
+      userId: m.userId.toString(),
+      username: m.username,
+      text: m.text,
+      createdAt: (m.createdAt as Date).toISOString(),
+    })),
+  };
 
   socket.emit(SocketEvents.CHAT_HISTORY, history);
 }
@@ -65,7 +75,8 @@ export function registerChatHandlers(socket: Socket): void {
   const userId = socket.data.userId;
   if (!userId) return;
 
-  socket.on(SocketEvents.CHAT_SEND, (payload: ChatSendPayload) =>
-    onChatSend(socket, userId, payload),
+  socket.on(
+    SocketEvents.CHAT_SEND,
+    safeHandler((payload: ChatSendPayload) => onChatSend(userId, payload)),
   );
 }

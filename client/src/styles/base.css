@@ -61,7 +61,6 @@ body {
     var(--paper);
 }
 
-/* Paper grain — subtle SVG noise overlay */
 body::before {
   content: '';
   position: fixed;
@@ -115,7 +114,6 @@ a:hover {
   flex-direction: column;
 }
 
-/* utilities */
 .tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
@@ -129,7 +127,6 @@ a:hover {
   color: var(--ash);
 }
 
-/* focus ring — minimal but visible */
 :where(button, a, input, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--oxblood);
   outline-offset: 2px;

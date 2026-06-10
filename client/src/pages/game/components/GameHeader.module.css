@@ -90,20 +90,15 @@
   white-space: nowrap;
 }
 
-.shareBtn:hover:not(:disabled) {
+.shareBtn:hover {
   background: linear-gradient(180deg, #ffffff 0%, #e0e0e0 100%);
   transform: translateY(-1px);
   box-shadow: 0 3px 0 #999, 0 5px 8px rgba(0, 0, 0, 0.2);
 }
 
-.shareBtn:active:not(:disabled) {
+.shareBtn:active {
   transform: translateY(2px);
   box-shadow: none;
-}
-
-.shareBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 @media (max-width: 880px) {

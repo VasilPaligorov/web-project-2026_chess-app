@@ -3,11 +3,10 @@ import styles from './GameHeader.module.css';
 
 interface Props {
   game: Game;
-  spectatorEnabled: boolean;
   onShareClick: () => void;
 }
 
-export function GameHeader({ game, spectatorEnabled, onShareClick }: Props) {
+export function GameHeader({ game, onShareClick }: Props) {
   return (
     <header className={styles.header}>
       <div className={styles.headerMeta}>
@@ -34,7 +33,6 @@ export function GameHeader({ game, spectatorEnabled, onShareClick }: Props) {
           type="button"
           className={styles.shareBtn}
           onClick={onShareClick}
-          disabled={!spectatorEnabled}
         >
           <span>SHARE LINK</span>
           <svg

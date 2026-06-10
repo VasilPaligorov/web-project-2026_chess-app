@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, JwtPayload } from '../utils/jwt';
 import { isBlacklisted } from '../utils/tokenBlacklist';
+import { asyncHandler } from './asyncHandler';
 
 declare global {
   namespace Express {
@@ -10,7 +11,7 @@ declare global {
   }
 }
 
-export async function requireAuth(req: Request, res: Response, next: NextFunction) {
+export const requireAuth = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
   const token = req.headers.authorization?.match(/^Bearer\s+(\S+)$/i)?.[1];
   if (!token) {
     res.status(401).json({ success: false, message: 'No token provided' });
@@ -32,4 +33,4 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   req.user = payload;
   next();
-}
+});

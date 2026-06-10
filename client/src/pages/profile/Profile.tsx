@@ -102,7 +102,6 @@ export default function Profile() {
 
   return (
     <div className={styles.page}>
-      {/* ── Hero ── */}
       <header className={styles.hero}>
         <p className={styles.eyebrow}>
           Folio Nº IV · {isMe ? 'You' : 'Player'}
@@ -119,7 +118,6 @@ export default function Profile() {
         </p>
       </header>
 
-      {/* ── Stats ── */}
       <section className={styles.statsGrid}>
         <Stat label="Wins" value={user.wins} accent="oxblood" />
         <Stat label="Losses" value={user.losses} />
@@ -129,7 +127,6 @@ export default function Profile() {
         <Stat label="Total" value={total} />
       </section>
 
-      {/* ── Recent games ── */}
       <section className={styles.list}>
         <header className={styles.listHeader}>
           <span className={styles.listLabel}>Recent matches</span>
