@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { getSocket } from '../../services/socket';
 import { useAuthStore } from '../../store/authStore';
-import { useWaitingGames } from '../../hooks/useWaitingGames';
+import { useWaitingGames } from './useWaitingGames';
 import { SocketEvents, type Game } from '../../../../shared/types';
 import { ActiveGamesList } from './components/ActiveGamesList';
 import { LobbyHero } from './components/LobbyHero';

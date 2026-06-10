@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
-import api from '../services/api';
-import { getSocket } from '../services/socket';
-import { SocketEvents, type Game } from '../../../shared/types';
+import api from '../../services/api';
+import { getSocket } from '../../services/socket';
+import { SocketEvents, type Game } from '../../../../shared/types';
 
 interface ListResponse {
   success: boolean;
