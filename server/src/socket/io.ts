@@ -1,7 +1,7 @@
 import { Server as HttpServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import { verifyToken } from '../utils/jwt';
-import { isBlacklisted } from '../utils/tokenBlacklist';
+import { isBlacklisted } from '../services/tokenBlacklist.service';
 import { registerSpectatorHandlers } from './spectatorSocket';
 import { registerGameHandlers } from './gameSocket';
 import { registerChatHandlers } from './chatSocket';
