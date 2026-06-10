@@ -3,7 +3,7 @@ import { User } from '../models/User';
 import { hashPassword, comparePassword } from '../utils/password';
 import { signToken } from '../utils/jwt';
 import { verifyGoogleAccessToken } from '../utils/google';
-import { blacklistToken } from '../utils/tokenBlacklist';
+import { blacklistToken } from '../services/tokenBlacklist.service';
 import { getIO } from '../socket/io';
 
 const isDuplicateKeyError = (err: unknown): boolean =>
