@@ -102,6 +102,7 @@
 .resumeBtn:hover {
   background: var(--oxblood-deep);
   border-color: var(--oxblood-deep);
+  color: var(--paper);
   transform: translateY(-1px);
 }
 

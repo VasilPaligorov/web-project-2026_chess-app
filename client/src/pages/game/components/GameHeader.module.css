@@ -82,11 +82,14 @@
   color: #333;
   background: linear-gradient(180deg, #f0f0f0 0%, #d1d1d1 100%);
   border: 1px solid #aaa;
-  padding: 8px 16px;
+  padding: var(--s-2) var(--s-4);
   border-radius: 9999px;
   cursor: pointer;
   box-shadow: 0 2px 0 #999, 0 4px 6px rgba(0, 0, 0, 0.2);
-  transition: all 150ms ease;
+  transition:
+    background 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
   white-space: nowrap;
 }
 

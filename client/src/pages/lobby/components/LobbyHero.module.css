@@ -84,6 +84,7 @@
 .createBtn:hover:not(:disabled) {
   background: var(--oxblood);
   border-color: var(--oxblood);
+  color: var(--paper);
   transform: translateY(-2px);
 }
 
@@ -166,9 +167,10 @@
   border: 1px solid var(--ink);
 }
 
-.openBtn:hover { 
-  background: var(--oxblood); 
+.openBtn:hover {
+  background: var(--oxblood);
   border-color: var(--oxblood);
+  color: var(--paper);
   transform: translateY(-1px);
 }
 

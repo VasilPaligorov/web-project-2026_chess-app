@@ -1,13 +1,12 @@
 .panel {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   border: 1px solid var(--rule);
   background: var(--paper-deep);
   border-radius: 12px;
-  height: 100%;
   width: 100%;
-  min-height: 320px;
-  max-height: 575px;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
 }
@@ -19,7 +18,7 @@
   text-transform: uppercase;
   color: var(--ash);
   margin: 0;
-  padding: var(--s-4) var(--s-4);
+  padding: var(--s-4);
   background: var(--paper);
   border-bottom: 1px solid var(--rule);
 }
@@ -28,7 +27,7 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: var(--s-4) var(--s-4);
+  padding: var(--s-4);
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
@@ -112,7 +111,6 @@
 .input {
   flex: 1;
   min-width: 0;
-  width: 100%;
   background: transparent;
   border: none;
   outline: none;

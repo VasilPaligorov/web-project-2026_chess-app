@@ -76,6 +76,7 @@
 .primary:hover:not(:disabled) {
   background: var(--oxblood);
   border-color: var(--oxblood);
+  color: var(--paper);
 }
 
 .primary:disabled {
